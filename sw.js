@@ -1,5 +1,5 @@
 /* Recomp 12 — service worker : hors-ligne complet */
-const CACHE = 'recomp12-v2';
+const CACHE = 'recomp12-v3';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

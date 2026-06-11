@@ -172,9 +172,50 @@ abbr.g{text-decoration:underline dotted var(--cobalt);cursor:help;text-underline
   color:#fff;font-size:13.5px;font-weight:700;padding:11px 18px;border-radius:99px;display:none;
   box-shadow:0 8px 24px rgba(10,16,24,.25)}
 .toast.on{display:block;animation:fade .2s ease}
+
+/* — Splash screen — */
+#splash{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,#2447E0 0%,#1B36AC 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
+  text-align:center;padding:30px;transition:opacity .45s ease}
+#splash.bye{opacity:0;pointer-events:none}
+#splash .logo{font-size:64px;font-weight:800;letter-spacing:.02em;
+  animation:pop .7s cubic-bezier(.2,.8,.25,1) both}
+#splash .wk{font-family:var(--mono);font-size:14px;opacity:.85;margin-top:6px;animation:rise .7s .25s ease both}
+#splash .quote{max-width:340px;font-size:15.5px;line-height:1.55;margin-top:26px;animation:rise .7s .45s ease both}
+#splash .src{font-size:12px;opacity:.75;margin-top:8px;animation:rise .7s .6s ease both}
+#splash .tap{position:absolute;bottom:34px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+@keyframes pop{from{opacity:0;transform:scale(.78)}to{opacity:1;transform:scale(1)}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#splash .logo,#splash .wk,#splash .quote,#splash .src{animation:none}}
+/* — Onglet Progrès — */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px}
+.chips button{border:1.5px solid var(--line);border-radius:99px;padding:7px 13px;font-size:12.5px;
+  font-weight:800;background:#fff;color:var(--mut)}
+.chips button.on{background:var(--cobalt);border-color:var(--cobalt);color:#fff}
+canvas.chartL{width:100%;height:190px;display:block;margin-top:6px;touch-action:pan-y}
+.ringwrap{display:flex;align-items:center;gap:18px}
+.ringwrap canvas{width:118px;height:118px;flex:none}
+.daydots{display:flex;gap:7px;margin-top:10px}
+.daydots .dd{width:30px;height:30px;border-radius:99px;border:1.5px solid var(--line);display:flex;
+  align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--mut)}
+.daydots .dd.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.statgrid .sg{border:1px solid var(--line);border-radius:var(--rs);padding:12px;background:#FAFBFF}
+.statgrid .sg .v{font-family:var(--mono);font-size:21px;font-weight:700}
+.statgrid .sg .l{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);margin-top:2px}
+.empty-chart{font-size:13px;color:var(--mut);padding:18px 6px;text-align:center;border:1.5px dashed var(--line);border-radius:var(--rs);margin-top:8px}
+
 </style>
 </head>
 <body>
+
+<div id="splash" onclick="hideSplash()">
+  <div class="logo">R12</div>
+  <div class="wk" id="splWk"></div>
+  <div class="quote" id="splQ"></div>
+  <div class="src" id="splS"></div>
+  <div class="tap">Toucher pour entrer</div>
+</div>
 
 <header class="top">
   <h1>Recomp <span>12</span></h1>
@@ -352,6 +393,52 @@ abbr.g{text-decoration:underline dotted var(--cobalt);cursor:help;text-underline
   </div>
 </section>
 
+
+<!-- ════════ PROGRÈS ════════ -->
+<section class="view" id="v-prog">
+  <div class="card">
+    <div class="eyebrow">Visualisation</div>
+    <h2>Tes progrès</h2>
+    <p class="sub">Tout ce que tu enregistres prend forme ici. Touche un point pour voir sa valeur.</p>
+  </div>
+  <div class="card">
+    <h3>Force — top set par compound 🏋️</h3>
+    <div class="chips" id="forceChips"></div>
+    <div id="forceWrap"><canvas class="chartL" id="pcForce"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Volume hebdomadaire</h3>
+    <p class="sub">Tonnage total (charge × reps) — les deloads S5 et S10 doivent être visiblement plus bas.</p>
+    <div id="volWrap"><canvas class="chartL" id="pcVol"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Composition corporelle</h3>
+    <p class="sub">Poids (bleu, échelle gauche) et tour de taille (ambre, échelle droite). Bande verte : objectif 73-75 kg. Pointillés : projection 3 semaines.</p>
+    <div id="bodyWrap"><canvas class="chartL" id="pcBody"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Cardio — moteur 🫀</h3>
+    <p class="sub">FC moyenne des 4x4. Vert : dans la zone 165-184. Rouge : en dessous, monte la résistance.</p>
+    <div id="cardWrap"><canvas class="chartL" id="pcCard"></canvas></div>
+    <div id="freeTotals"></div>
+  </div>
+  <div class="card">
+    <h3>Constance — règle 80/20</h3>
+    <div class="ringwrap">
+      <canvas id="pcRing" width="236" height="236"></canvas>
+      <div>
+        <div class="num" style="font-size:26px;font-weight:700" id="ringTxt">—</div>
+        <div class="sub">jours pleins cette semaine (séance prévue honorée + assiette ≥ 4/5)</div>
+      </div>
+    </div>
+    <div class="daydots" id="dayDots"></div>
+  </div>
+  <div class="card">
+    <h3>Bilan global depuis le départ</h3>
+    <div class="statgrid" id="bilanGrid"></div>
+  </div>
+</section>
+
 </main>
 
 <!-- Chrono plein écran -->
@@ -384,6 +471,7 @@ abbr.g{text-decoration:underline dotted var(--cobalt);cursor:help;text-underline
   <button data-v="cardio"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg></span>Cardio</button>
   <button data-v="checkin"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 17l5-5 4 3 7-8"/></svg></span>Bilan</button>
   <button data-v="food"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/></svg></span>Assiette</button>
+  <button data-v="prog"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 17l4-6 4 2 4-7 4 4"/></svg></span>Progrès</button>
 </nav>
 <script>
 /* ═══════════ Persistance (localStorage + repli mémoire) ═══════════ */
@@ -477,6 +565,7 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
     if(b.dataset.v==='checkin')renderCheckin();
     if(b.dataset.v==='cardio')renderCardio();
     if(b.dataset.v==='food')renderFood();
+    if(b.dataset.v==='prog')renderProg();
     window.scrollTo({top:0}); };
 });
 
@@ -891,5 +980,262 @@ document.addEventListener('click',e=>{
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
 renderHome(); renderTrain(); renderFood();
 </script>
+
+<script>
+/* ═══════════ Splash screen ═══════════ */
+const QUOTES = [
+ ['« Les œuvres les plus aimées d\u2019Allah sont les plus constantes, même si elles sont minimes. »','Prophète \uFDFA — Sahih al-Bukhari (6464) et Muslim (783)'],
+ ['« Le croyant fort est meilleur et plus aimé d\u2019Allah que le croyant faible — et en chacun il y a du bien. »','Prophète \uFDFA — Sahih Muslim (2664)'],
+ ['« Certes, avec la difficulté est une facilité. »','Coran — sourate Ash-Sharh, 94:6'],
+ ['« Allah ne modifie point l\u2019état d\u2019un peuple tant qu\u2019ils ne modifient pas ce qui est en eux-mêmes. »','Coran — sourate Ar-Ra\u2019d, 13:11'],
+ ['« Profite de ta santé avant ta maladie, et de ta jeunesse avant ta vieillesse. »','Prophète \uFDFA — rapporté par al-Hâkim'],
+ ['« Ton corps a un droit sur toi. »','Prophète \uFDFA — Sahih al-Bukhari'],
+ ['La constance bat l\u2019intensité. Chaque séance posée est une brique.','Règle du carnet'],
+ ['Tu ne perds pas du poids, tu transformes ton corps — ce n\u2019est pas le même métier.','Livret Recomp 12'],
+ ['RIR 2 aujourd\u2019hui, record demain.','Règle du carnet'],
+ ['Le 4e intervalle est le plus dur — et le plus rentable.','Protocole 4x4']
+];
+function showSplash(){
+  const q=QUOTES[Math.floor(Math.random()*QUOTES.length)];
+  $('splWk').textContent='Semaine '+weekNum()+' / 12';
+  $('splQ').textContent=q[0]; $('splS').textContent=q[1];
+  setTimeout(hideSplash, 2300);
+}
+function hideSplash(){ const s=$('splash'); if(s){ s.classList.add('bye'); setTimeout(()=>s.remove(), 500); } }
+
+/* ═══════════ Moteur graphique (Canvas natif, animé, tactile) ═══════════ */
+const REDUCED = (typeof matchMedia==='function') ? matchMedia('(prefers-reduced-motion: reduce)').matches : false;
+function cvCtx(cv){
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  const W=cv.offsetWidth||320, H=parseInt(getComputedStyle(cv).height)||190;
+  cv.width=W*dpr; cv.height=H*dpr;
+  const ctx=cv.getContext('2d'); if(!ctx)return null;
+  ctx.scale(dpr,dpr); return {ctx,W,H};
+}
+function animateChart(cv, drawFn){
+  cv._draw=drawFn;
+  if(REDUCED){ drawFn(1); return; }
+  const t0=performance.now(), dur=750;
+  function frame(t){
+    if(!cv.isConnected)return;
+    const p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+    drawFn(e);
+    if(p<1)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+function attachTip(cv){
+  if(cv._tipOn)return; cv._tipOn=true;
+  cv.addEventListener('pointerdown', ev=>{
+    if(!cv._pts||!cv._pts.length||!cv._draw)return;
+    const r=cv.getBoundingClientRect(), x=ev.clientX-r.left, y=ev.clientY-r.top;
+    let best=null,bd=1e9;
+    cv._pts.forEach(p=>{ const d=Math.hypot(p.x-x,p.y-y); if(d<bd){bd=d;best=p;} });
+    if(!best||bd>40)return;
+    cv._draw(1);
+    const c=cv.getContext('2d');
+    const txt=best.lbl, pad=7;
+    c.font='700 12px -apple-system,sans-serif';
+    const tw=c.measureText(txt).width;
+    let bx=Math.min(Math.max(best.x-tw/2-pad,4), (cv.offsetWidth)-tw-2*pad-4), by=best.y-38;
+    if(by<4)by=best.y+14;
+    c.fillStyle='#141C24'; 
+    c.beginPath(); c.roundRect(bx,by,tw+2*pad,24,7); c.fill();
+    c.fillStyle='#fff'; c.fillText(txt,bx+pad,by+16);
+    c.beginPath(); c.arc(best.x,best.y,6,0,7); c.strokeStyle='#141C24'; c.lineWidth=3; c.stroke();
+  });
+}
+function emptyBox(wrapId, msg){ $(wrapId).innerHTML='<div class="empty-chart">'+msg+'</div>'; }
+function ensureCanvas(wrapId, cvId){
+  if(!$(cvId)){ $(wrapId).innerHTML='<canvas class="chartL" id="'+cvId+'"></canvas>'; }
+  return $(cvId);
+}
+
+/* ═══════════ Onglet Progrès ═══════════ */
+const COMPOUNDS=[['Squat barre','LF'],['Développé couché','UF'],['Soulevé de terre classique','LH'],['Développé militaire','UF']];
+let forceSel=0;
+function renderProg(){
+  renderForceChart(); renderVolChart(); renderBodyChart(); renderCardChart(); renderRing(); renderBilan();
+}
+function topSeries(name){
+  return Object.entries(DB.train)
+    .map(([d,t])=>{ const e=t.exos.find(x=>x.n===name); if(!e)return null;
+      const top=Math.max(0,...e.sets.map(s=>+s.kg||0)); return top>0?{d,v:top,w:t.week}:null; })
+    .filter(Boolean).sort((a,b)=>a.d<b.d?-1:1);
+}
+function renderForceChart(){
+  let chips='';
+  COMPOUNDS.forEach((c,i)=>{ chips+='<button class="'+(i===forceSel?'on':'')+'" onclick="forceSel='+i+';renderForceChart()">'+c[0].split(' ')[0]+(i===2?' de terre':i===3?' militaire':'')+'</button>'; });
+  $('forceChips').innerHTML=chips;
+  const data=topSeries(COMPOUNDS[forceSel][0]);
+  if(data.length<2){ emptyBox('forceWrap','2 séances minimum pour tracer une tendance — la courbe naît à la prochaine.'); return; }
+  const cv=ensureCanvas('forceWrap','pcForce'), g=cvCtx(cv); if(!g)return;
+  const {ctx,W,H}=g;
+  const vals=data.map(p=>p.v), min=Math.min(...vals)-2.5, max=Math.max(...vals)+2.5;
+  const X=i=>34+(W-50)*i/(data.length-1), Y=v=>H-26-(H-50)*(v-min)/(max-min||1);
+  animateChart(cv, e=>{
+    ctx.clearRect(0,0,W,H); cv._pts=[];
+    ctx.strokeStyle='#DEE4EA'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(34,H-26); ctx.lineTo(W-16,H-26); ctx.stroke();
+    ctx.fillStyle='#8896A4'; ctx.font='11px ui-monospace,monospace';
+    ctx.fillText(Math.round(max-2.5)+'kg',2,Y(max-2.5)+4); ctx.fillText(Math.round(min+2.5)+'kg',2,Y(min+2.5)+4);
+    const n=Math.max(2,Math.ceil(data.length*e));
+    ctx.strokeStyle='#2447E0'; ctx.lineWidth=3; ctx.lineJoin='round'; ctx.beginPath();
+    data.slice(0,n).forEach((p,i)=>i?ctx.lineTo(X(i),Y(p.v)):ctx.moveTo(X(i),Y(p.v))); ctx.stroke();
+    data.slice(0,n).forEach((p,i)=>{
+      const dl=isDeload(p.w||weekNum(new Date(p.d)));
+      ctx.beginPath(); ctx.arc(X(i),Y(p.v),5,0,7);
+      ctx.fillStyle=dl?'#A8741A':'#141C24'; ctx.fill();
+      cv._pts.push({x:X(i),y:Y(p.v),lbl:p.v+' kg · '+p.d.slice(5)+(dl?' (deload)':'')});
+    });
+  });
+  attachTip(cv);
+}
+function renderVolChart(){
+  const byWeek={};
+  Object.entries(DB.train).forEach(([d,t])=>{
+    const w=t.week||weekNum(new Date(d));
+    const ton=t.exos.reduce((a,e)=>a+e.sets.reduce((b,s)=>b+(+s.kg||0)*(+s.reps||0),0),0);
+    byWeek[w]=(byWeek[w]||0)+ton;
+  });
+  if(!Object.keys(byWeek).length){ emptyBox('volWrap','Le tonnage apparaîtra dès ta première séance enregistrée.'); return; }
+  const cv=ensureCanvas('volWrap','pcVol'), g=cvCtx(cv); if(!g)return;
+  const {ctx,W,H}=g, maxV=Math.max(...Object.values(byWeek))*1.15;
+  const bw=(W-40)/12;
+  animateChart(cv, e=>{
+    ctx.clearRect(0,0,W,H); cv._pts=[];
+    ctx.strokeStyle='#DEE4EA'; ctx.beginPath(); ctx.moveTo(20,H-24); ctx.lineTo(W-20,H-24); ctx.stroke();
+    for(let w=1;w<=12;w++){
+      const v=byWeek[w]||0, bh=(H-50)*(v/maxV)*e, x=20+(w-1)*bw;
+      ctx.fillStyle=isDeload(w)?'#E8C98A':(w===weekNum()?'#2447E0':'#9FB4F0');
+      if(v>0){ ctx.beginPath(); ctx.roundRect(x+3,H-24-bh,bw-6,bh,4); ctx.fill();
+        cv._pts.push({x:x+bw/2,y:H-24-bh,lbl:'S'+w+' · '+Math.round(v).toLocaleString('fr-FR')+' kg'}); }
+      ctx.fillStyle='#8896A4'; ctx.font='10px ui-monospace,monospace';
+      ctx.fillText(w,x+bw/2-3,H-9);
+    }
+  });
+  attachTip(cv);
+}
+function renderBodyChart(){
+  const ks=DB.checkins;
+  if(ks.length<2){ emptyBox('bodyWrap','2 check-ins minimum — chaque dimanche soir ajoute un point à ton histoire.'); return; }
+  const cv=ensureCanvas('bodyWrap','pcBody'), g=cvCtx(cv); if(!g)return;
+  const {ctx,W,H}=g;
+  const ws=ks.map(k=>k.w), ts=ks.filter(k=>k.t).map(k=>k.t);
+  const wmin=Math.min(72,...ws)-1, wmax=Math.max(80,...ws)+1;
+  const tmin=ts.length?Math.min(...ts)-2:0, tmax=ts.length?Math.max(...ts)+2:1;
+  const N=ks.length+3; // place pour la projection
+  const X=i=>40+(W-78)*i/(N-1);
+  const YW=v=>H-26-(H-52)*(v-wmin)/(wmax-wmin), YT=v=>H-26-(H-52)*(v-tmin)/(tmax-tmin||1);
+  // tendance linéaire sur les 3 derniers poids
+  const last=ks.slice(-3), slope=last.length>=2?(last[last.length-1].w-last[0].w)/(last.length-1):0;
+  animateChart(cv, e=>{
+    ctx.clearRect(0,0,W,H); cv._pts=[];
+    ctx.fillStyle='rgba(30,138,90,.13)'; ctx.fillRect(40,YW(75),W-78,YW(73)-YW(75));   // bande objectif
+    ctx.fillStyle='#1E8A5A'; ctx.font='10px ui-monospace,monospace'; ctx.fillText('73-75',W-34,YW(74)+3);
+    ctx.fillStyle='#8896A4'; ctx.fillText(wmax.toFixed(0),4,YW(wmax)+10); ctx.fillText(wmin.toFixed(0),4,YW(wmin));
+    const n=Math.max(2,Math.ceil(ks.length*e));
+    ctx.strokeStyle='#2447E0'; ctx.lineWidth=3; ctx.beginPath();
+    ks.slice(0,n).forEach((k,i)=>i?ctx.lineTo(X(i),YW(k.w)):ctx.moveTo(X(i),YW(k.w))); ctx.stroke();
+    ks.slice(0,n).forEach((k,i)=>{ ctx.beginPath(); ctx.arc(X(i),YW(k.w),5,0,7); ctx.fillStyle='#141C24'; ctx.fill();
+      cv._pts.push({x:X(i),y:YW(k.w),lbl:k.w.toFixed(1)+' kg · '+k.date.slice(5)}); });
+    if(e>=1&&slope<0){  // projection en pointillés si la tendance descend
+      ctx.setLineDash([6,5]); ctx.strokeStyle='#7E96F5'; ctx.lineWidth=2; ctx.beginPath();
+      ctx.moveTo(X(ks.length-1),YW(ks[ks.length-1].w));
+      for(let j=1;j<=3;j++) ctx.lineTo(X(ks.length-1+j),YW(ks[ks.length-1].w+slope*j));
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+    if(ts.length>=2){
+      ctx.strokeStyle='#A8741A'; ctx.lineWidth=2.5; ctx.beginPath();
+      let j=0; ks.slice(0,n).forEach((k,i)=>{ if(k.t){ j++? ctx.lineTo(X(i),YT(k.t)) : ctx.moveTo(X(i),YT(k.t)); }});
+      ctx.stroke();
+      ks.slice(0,n).forEach((k,i)=>{ if(k.t){ ctx.beginPath(); ctx.arc(X(i),YT(k.t),4,0,7); ctx.fillStyle='#A8741A'; ctx.fill();
+        cv._pts.push({x:X(i),y:YT(k.t),lbl:k.t+' cm · '+k.date.slice(5)}); }});
+      ctx.fillStyle='#A8741A'; ctx.fillText(tmax.toFixed(0)+'cm',W-36,14);
+    }
+  });
+  attachTip(cv);
+}
+function renderCardChart(){
+  // totaux sorties libres d'abord (indépendants du canvas)
+  const fs=DB.freeCardio||[];
+  if(!fs.length){ $('freeTotals').innerHTML=''; }
+  else{
+    const agg={};
+    fs.forEach(f=>{ agg[f.t]=agg[f.t]||{min:0,km:0,n:0}; agg[f.t].min+=f.d||0; agg[f.t].km+=f.km||0; agg[f.t].n++; });
+    let h='<div class="divider"></div><div class="eyebrow">Sorties libres cumulées</div><table class="hist"><tr><th>Activité</th><th>Sorties</th><th>Minutes</th><th>Km</th></tr>';
+    Object.entries(agg).forEach(([t,a])=>{ h+='<tr><td style="font-family:inherit">'+t+'</td><td>'+a.n+'</td><td>'+a.min+'</td><td>'+(a.km?a.km.toFixed(1):'\u2014')+'</td></tr>'; });
+    $('freeTotals').innerHTML=h+'</table>';
+  }
+  const cs=DB.cardio.filter(c=>c.avg);
+  if(cs.length<2){ emptyBox('cardWrap','2 séances 4x4 minimum — samedi prochain, le deuxième point arrive.'); }
+  else{
+    const cv=ensureCanvas('cardWrap','pcCard'), g=cvCtx(cv); if(!g)return;
+    const {ctx,W,H}=g, min=130, max=195;
+    const X=i=>34+(W-50)*i/(cs.length-1), Y=v=>H-26-(H-50)*(v-min)/(max-min);
+    animateChart(cv, e=>{
+      ctx.clearRect(0,0,W,H); cv._pts=[];
+      ctx.fillStyle='rgba(30,138,90,.13)'; ctx.fillRect(34,Y(184),W-50,Y(165)-Y(184));
+      ctx.fillStyle='#1E8A5A'; ctx.font='10px ui-monospace,monospace'; ctx.fillText('zone 165-184',38,Y(184)+12);
+      const n=Math.max(2,Math.ceil(cs.length*e));
+      ctx.strokeStyle='#2447E0'; ctx.lineWidth=3; ctx.beginPath();
+      cs.slice(0,n).forEach((c,i)=>i?ctx.lineTo(X(i),Y(c.avg)):ctx.moveTo(X(i),Y(c.avg))); ctx.stroke();
+      cs.slice(0,n).forEach((c,i)=>{
+        const inZ=c.avg>=165&&c.avg<=184;
+        ctx.beginPath(); ctx.arc(X(i),Y(c.avg),5.5,0,7); ctx.fillStyle=inZ?'#1E8A5A':'#D9472E'; ctx.fill();
+        cv._pts.push({x:X(i),y:Y(c.avg),lbl:c.avg+' bpm · R'+(c.r||'?')+' · '+c.date.slice(5)});
+      });
+    });
+    attachTip(cv);
+  }
+}
+function renderRing(){
+  const sc=weekScore(), done=+sc.split('/')[0], pct=done/7;
+  $('ringTxt').textContent=sc;
+  // pastilles des 7 derniers jours (avant le canvas)
+  const names=['D','L','M','M','J','V','S']; let dots='';
+  const dd=new Date(); dd.setDate(dd.getDate()-6);
+  for(let i=0;i<7;i++){
+    const iso=dd.toISOString().slice(0,10), p=PROGRAM[dd.getDay()];
+    const trainOK = p&&p.cardio ? DB.cardio.some(c=>c.date===iso) : p&&!p.off&&p.exos ? !!DB.train[iso] : true;
+    const foodOK = DB.food[iso] ? DB.food[iso].score>=4 : false;
+    dots+='<div class="dd'+((trainOK&&foodOK)?' ok':'')+'">'+names[dd.getDay()]+'</div>';
+    dd.setDate(dd.getDate()+1);
+  }
+  $('dayDots').innerHTML=dots;
+  const cv=$('pcRing'), ctx=cv.getContext&&cv.getContext('2d'); if(!ctx)return;
+  const C=118, dpr=2; cv.width=C*dpr; cv.height=C*dpr; ctx.scale(dpr,dpr);
+  animateChart(cv, e=>{
+    ctx.clearRect(0,0,C,C);
+    ctx.lineWidth=11; ctx.lineCap='round';
+    ctx.strokeStyle='#E8ECF2'; ctx.beginPath(); ctx.arc(C/2,C/2,46,0,7); ctx.stroke();
+    ctx.strokeStyle=pct>=6/7?'#1E8A5A':'#2447E0';
+    ctx.beginPath(); ctx.arc(C/2,C/2,46,-Math.PI/2,-Math.PI/2+2*Math.PI*pct*e); ctx.stroke();
+    ctx.fillStyle='#141C24'; ctx.font='700 21px ui-monospace,monospace'; ctx.textAlign='center';
+    ctx.fillText(Math.round(pct*e*100)+'%',C/2,C/2+7); ctx.textAlign='left';
+  });
+}
+function renderBilan(){
+  const ks=DB.checkins, out=[];
+  const w0=79, wNow=ks.length?ks[ks.length-1].w:null;
+  out.push(['📉', wNow?(w0-wNow>=0?'-':'+')+Math.abs(w0-wNow).toFixed(1)+' kg':'—','Poids depuis le départ (79 kg)']);
+  const tArr=ks.filter(k=>k.t);
+  out.push(['📏', tArr.length>=2?(tArr[0].t-tArr[tArr.length-1].t).toFixed(1)+' cm':'—','Tour de taille perdu']);
+  COMPOUNDS.slice(0,2).forEach(c=>{
+    const s=topSeries(c[0]);
+    out.push(['🏋️', s.length>=2?'+'+(s[s.length-1].v-s[0].v).toFixed(1)+' kg':'—', c[0]]);
+  });
+  // séances honorées / prévues
+  let planned=0, d=new Date(START);
+  const today=new Date();
+  while(d<=today){ const p=PROGRAM[d.getDay()]; if(p&&(p.exos||p.cardio))planned++; d.setDate(d.getDate()+1); }
+  const done=Object.keys(DB.train).length+DB.cardio.length;
+  out.push(['✅', planned?done+'/'+planned:'—','Séances honorées / prévues']);
+  out.push(['🔥', calcStreak()+' j','Streak de constance']);
+  $('bilanGrid').innerHTML=out.map(o=>'<div class="sg"><div class="v">'+o[0]+' '+o[1]+'</div><div class="l">'+o[2]+'</div></div>').join('');
+}
+showSplash();
+</script>
+
 </body>
 </html>
