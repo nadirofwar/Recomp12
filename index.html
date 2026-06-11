@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recomp 12 — Journal de bord</title>
+<style>
+:root{
+  --bg:#F1F3F6; --card:#FFFFFF; --ink:#141C24; --mut:#5C6B78; --line:#DEE4EA;
+  --cobalt:#2447E0; --cobalt-soft:#E8ECFC; --effort:#D9472E; --effort-soft:#FBEAE6;
+  --ok:#1E8A5A; --ok-soft:#E4F3EC; --warn:#A8741A; --warn-soft:#FBF3E2;
+  --r:14px; --rs:9px;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.45;padding-bottom:84px}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;color:var(--ink)}
+/* — Charpente — */
+header.top{position:sticky;top:0;z-index:30;background:var(--ink);color:#fff;
+  padding:14px 18px 12px;display:flex;align-items:baseline;justify-content:space-between}
+header.top h1{font-size:17px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+header.top h1 span{color:#7E96F5}
+header.top .wk{font-family:var(--mono);font-size:12px;color:#9FB0C0}
+header.top .glossbtn{font-size:12px;font-weight:700;color:#C9D4F8;border:1px solid #3A4A5C;
+  border-radius:99px;padding:4px 12px;margin-left:10px}
+main{max-width:680px;margin:0 auto;padding:16px 14px 30px}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:30;background:#fff;
+  border-top:1px solid var(--line);display:flex;justify-content:space-around;
+  padding:6px 4px calc(8px + env(safe-area-inset-bottom))}
+nav.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);
+  padding:6px 2px;border-radius:10px}
+nav.tabs button.on{color:var(--cobalt)}
+nav.tabs button .ic{width:22px;height:22px;display:block}
+nav.tabs button .ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.view{display:none}.view.on{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* — Cartes & titres — */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px;margin-bottom:14px}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+h2{font-size:20px;font-weight:800;letter-spacing:-.01em;margin-bottom:4px}
+h3{font-size:15px;font-weight:800;margin-bottom:8px}
+.sub{font-size:13px;color:var(--mut)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+/* — Rail des 12 semaines (signature) — */
+.rail{display:flex;gap:4px;margin-top:12px}
+.rail .seg{flex:1;height:26px;border-radius:5px;background:#E3E8EE;border:1px solid var(--line);
+  position:relative;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:10px;color:var(--mut)}
+.rail .seg.done{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rail .seg.cur{background:var(--cobalt);color:#fff;border-color:var(--cobalt);box-shadow:0 0 0 3px var(--cobalt-soft)}
+.rail .seg.dl{border-style:dashed;border-color:var(--warn)}
+.raillbl{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:5px}
+/* — Pastilles, badges — */
+.pill{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+  border-radius:99px;padding:3px 10px}
+.pill.cob{background:var(--cobalt-soft);color:var(--cobalt)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.eff{background:var(--effort-soft);color:var(--effort)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.mut{background:#EBEFF3;color:var(--mut)}
+/* — Stat tiles — */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:12px 10px;text-align:center}
+.tile .v{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1.1}
+.tile .l{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-top:3px}
+/* — Conseils — */
+.advice{border-left:3px solid var(--cobalt);background:var(--cobalt-soft);border-radius:0 var(--rs) var(--rs) 0;
+  padding:10px 12px;margin-top:10px;font-size:13.5px}
+.advice.w{border-color:var(--warn);background:var(--warn-soft)}
+.advice.e{border-color:var(--effort);background:var(--effort-soft)}
+.advice.g{border-color:var(--ok);background:var(--ok-soft)}
+.advice b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.advice .why{display:block;color:var(--mut);font-size:12px;margin-top:3px}
+/* — Exercices — */
+.exo{border:1px solid var(--line);border-radius:var(--rs);padding:12px;margin-bottom:10px;background:#fff}
+.exo .head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.exo .nm{font-weight:800;font-size:14.5px}
+.exo .scheme{font-family:var(--mono);font-size:12px;color:var(--mut)}
+.exo .tip{font-size:12px;color:var(--mut);margin-top:4px}
+.setrow{display:grid;grid-template-columns:46px 1fr 1fr 40px;gap:8px;align-items:center;margin-top:8px}
+.setrow .sl{font-family:var(--mono);font-size:12px;color:var(--mut)}
+.setrow input{width:100%;border:1px solid var(--line);border-radius:7px;padding:8px;text-align:center;
+  font-family:var(--mono);font-size:14px;background:#FAFBFC}
+.setrow input:focus{outline:2px solid var(--cobalt);border-color:var(--cobalt)}
+.setrow .ck{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--line);display:flex;
+  align-items:center;justify-content:center;color:transparent;font-weight:800}
+.setrow .ck.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.prog-flag{margin-top:8px;font-size:12.5px;font-weight:700;color:var(--ok)}
+.prog-flag.hold{color:var(--mut);font-weight:500}
+/* — Boutons — */
+.btn{display:block;width:100%;text-align:center;font-weight:800;font-size:14px;letter-spacing:.03em;
+  padding:13px;border-radius:11px;background:var(--cobalt);color:#fff;margin-top:12px}
+.btn:active{transform:scale(.985)}
+.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.btn.eff{background:var(--effort)}
+.btn.sm{display:inline-block;width:auto;padding:8px 14px;font-size:12.5px;margin-top:0}
+.btn[disabled]{opacity:.45;pointer-events:none}
+/* — Chrono plein écran (signature) — */
+.chronowrap{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;color:#fff;padding:24px;
+  transition:background .5s ease}
+.chronowrap.on{display:flex}
+.chronowrap .phase{font-size:13px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;opacity:.85}
+.chronowrap .t{font-family:var(--mono);font-size:21vw;font-weight:700;line-height:1;margin:10px 0;
+  font-variant-numeric:tabular-nums}
+@media(min-width:520px){.chronowrap .t{font-size:110px}}
+.chronowrap .zone{font-size:15px;font-weight:600;opacity:.9}
+.chronowrap .next{font-size:13px;opacity:.6;margin-top:14px}
+.chronowrap .ctr{display:flex;gap:10px;margin-top:26px}
+.chronowrap .ctr button{border:1.5px solid rgba(255,255,255,.5);border-radius:99px;
+  padding:10px 22px;font-weight:800;color:#fff;font-size:14px}
+.chronowrap .stepdots{display:flex;gap:5px;margin-top:18px}
+.chronowrap .stepdots i{width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,.3)}
+.chronowrap .stepdots i.on{background:#fff}
+/* — Formulaires — */
+.frow{margin-bottom:12px}
+.frow label{display:block;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--mut);margin-bottom:5px}
+.frow input,.frow select,.frow textarea{width:100%;border:1px solid var(--line);border-radius:9px;
+  padding:11px;background:#FAFBFC;font-size:15px}
+.frow input:focus,.frow select:focus{outline:2px solid var(--cobalt)}
+.range10{display:flex;gap:5px}
+.range10 button{flex:1;border:1px solid var(--line);border-radius:7px;padding:9px 0;
+  font-family:var(--mono);font-size:13px;background:#fff}
+.range10 button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* — Checklist nutrition — */
+.chk{display:flex;align-items:flex-start;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.chk:last-of-type{border-bottom:none}
+.chk .box{flex:none;width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;color:transparent;font-weight:800;margin-top:1px}
+.chk.on .box{background:var(--ok);border-color:var(--ok);color:#fff}
+.chk .lt{font-weight:700;font-size:14px}
+.chk .ls{font-size:12px;color:var(--mut)}
+/* — Tableaux & historique — */
+table.hist{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+table.hist th{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);
+  text-align:left;padding:6px 6px;border-bottom:1px solid var(--line)}
+table.hist td{padding:7px 6px;border-bottom:1px solid #ECF0F4;font-family:var(--mono)}
+canvas.chart{width:100%;height:150px;display:block;margin-top:8px}
+/* — Glossaire & modale — */
+.modal{position:fixed;inset:0;z-index:70;background:rgba(15,22,30,.55);display:none;
+  align-items:flex-end;justify-content:center}
+.modal.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:680px;max-height:82vh;overflow:auto;
+  border-radius:18px 18px 0 0;padding:20px 18px 34px}
+.sheet h3{display:flex;justify-content:space-between;align-items:center}
+.gterm{padding:10px 0;border-bottom:1px solid var(--line)}
+.gterm b{font-size:14px}
+.gterm p{font-size:13px;color:var(--mut);margin-top:2px}
+abbr.g{text-decoration:underline dotted var(--cobalt);cursor:help;text-underline-offset:3px}
+.muted-note{font-size:12px;color:var(--mut);margin-top:10px}
+.streakband{display:flex;align-items:center;gap:12px;margin-top:4px}
+.flame{width:38px;height:38px;border-radius:11px;background:var(--ink);color:#fff;display:flex;
+  align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:16px}
+.divider{height:1px;background:var(--line);margin:14px 0}
+.seg2{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.seg2 button{flex:1;padding:10px;font-weight:800;font-size:13px;background:#fff;color:var(--mut)}
+.seg2 button.on{background:var(--ink);color:#fff}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:80;background:var(--ink);
+  color:#fff;font-size:13.5px;font-weight:700;padding:11px 18px;border-radius:99px;display:none;
+  box-shadow:0 8px 24px rgba(10,16,24,.25)}
+.toast.on{display:block;animation:fade .2s ease}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Recomp <span>12</span></h1>
+  <div style="display:flex;align-items:center">
+    <span class="wk" id="hdrWeek">Semaine —</span>
+    <button class="glossbtn" onclick="openGloss()">Glossaire</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ════════ ACCUEIL ════════ -->
+<section class="view on" id="v-home">
+  <div class="card">
+    <div class="eyebrow" id="homeDate">—</div>
+    <h2 id="homeTitle">Bienvenue</h2>
+    <p class="sub" id="homeSub"></p>
+    <div id="homeCTA"></div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">Programme · 12 semaines</div>
+    <div class="rail" id="rail"></div>
+    <div class="raillbl"><span>12 juin</span><span>Deload S5 · S10 (pointillés)</span><span>3 sept.</span></div>
+  </div>
+
+  <div class="tiles" style="margin-bottom:14px">
+    <div class="tile"><div class="v" id="tStreak">0</div><div class="l">Streak jours</div></div>
+    <div class="tile"><div class="v" id="tWeekScore">—</div><div class="l">Semaine 80/20</div></div>
+    <div class="tile"><div class="v" id="tWeight">—</div><div class="l">Poids (kg)</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Conseils du coach</h3>
+    <p class="sub">Générés à partir de tes données réelles — chaque conseil dit pourquoi.</p>
+    <div id="adviceBox"></div>
+  </div>
+
+  <div class="card">
+    <h3>Semaine type</h3>
+    <table class="hist">
+      <tr><th>Jour</th><th>Séance</th></tr>
+      <tr><td>Ven</td><td style="font-family:inherit">Upper — Force <span class="pill cob">8h00</span></td></tr>
+      <tr><td>Sam</td><td style="font-family:inherit">Cardio 4x4 vélo <span class="pill eff">9h00</span></td></tr>
+      <tr><td>Dim</td><td style="font-family:inherit">Lower — Force + check-in du soir</td></tr>
+      <tr><td>Mar</td><td style="font-family:inherit">Upper — Hypertrophie</td></tr>
+      <tr><td>Mer</td><td style="font-family:inherit">Lower — Hypertrophie</td></tr>
+      <tr><td>Lun · Jeu</td><td style="font-family:inherit;color:var(--mut)">Repos complet — la croissance se fait là</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ════════ SÉANCE MUSCU ════════ -->
+<section class="view" id="v-train">
+  <div class="card">
+    <div class="eyebrow" id="trainEyebrow">Séance</div>
+    <h2 id="trainTitle">—</h2>
+    <p class="sub" id="trainSub"></p>
+    <div id="deloadBanner"></div>
+  </div>
+  <div id="exoList"></div>
+  <div class="card" id="finisherCard"></div>
+  <div class="card">
+    <h3>Ressenti de séance</h3>
+    <div class="range10" id="trainFeel"></div>
+    <button class="btn" id="saveTrainBtn" onclick="saveTraining()">Enregistrer la séance</button>
+    <p class="muted-note">Astuce : note tes charges pendant les repos de 2-3 min — c'est fait pour ça.</p>
+  </div>
+  <div class="card">
+    <h3>Historique <span class="sub" id="histType"></span></h3>
+    <div id="trainHist"></div>
+  </div>
+</section>
+
+<!-- ════════ CARDIO ════════ -->
+<section class="view" id="v-cardio">
+  <div class="card">
+    <div class="eyebrow">Samedi · Vélo</div>
+    <h2>4x4 norvégien</h2>
+    <p class="sub">10 min échauffement · 4 × (4 min effort / 3 min récup active) · 5 min retour au calme. Zone d'effort : <b>165-184 bpm</b> (85-95 % de ta FC max 194). Récup : ~135 bpm, sans cesser de pédaler.</p>
+    <button class="btn eff" onclick="startFourByFour()">Lancer la séance guidée — 40 min</button>
+  </div>
+  <div class="card">
+    <h3>Bilan post-séance</h3>
+    <div class="frow"><label>Résistance utilisée (1-15)</label><input type="number" id="cR" min="1" max="15" inputmode="numeric" placeholder="07"></div>
+    <div class="frow"><label>FC max atteinte (bpm)</label><input type="number" id="cMax" inputmode="numeric" placeholder="172"></div>
+    <div class="frow"><label>FC moyenne sur les efforts (bpm)</label><input type="number" id="cAvg" inputmode="numeric" placeholder="168"></div>
+    <div class="frow"><label>Sensation /10</label><div class="range10" id="cFeel"></div></div>
+    <button class="btn" onclick="saveCardio()">Enregistrer le cardio</button>
+  </div>
+  <div class="card">
+    <h3>Progression <abbr class="g" data-g="vo2">VO2 max</abbr></h3>
+    <p class="sub">FC moyenne à résistance égale : si elle baisse au fil des semaines pour le même effort, ton moteur grandit.</p>
+    <canvas class="chart" id="chartCardio" height="150"></canvas>
+    <div id="cardioHist"></div>
+  </div>
+</section>
+
+<!-- ════════ CHECK-IN ════════ -->
+<section class="view" id="v-checkin">
+  <div class="card">
+    <div class="eyebrow">Dimanche soir</div>
+    <h2>Check-in hebdomadaire</h2>
+    <p class="sub">4 données, 2 minutes. C'est ce qui pilote tes ajustements de la semaine — pas la balance d'un jour isolé.</p>
+  </div>
+  <div class="card">
+    <div class="frow"><label>Poids du matin — moyenne 3 jours (kg)</label><input type="number" step="0.1" id="kW" inputmode="decimal" placeholder="78.4"></div>
+    <div class="frow"><label>Tour de taille au nombril (cm)</label><input type="number" step="0.5" id="kT" inputmode="decimal" placeholder="92"></div>
+    <div class="frow"><label>Énergie /10</label><div class="range10" id="kE"></div></div>
+    <div class="frow"><label>Sommeil /10</label><div class="range10" id="kS"></div></div>
+    <div class="frow"><label>Humeur /10</label><div class="range10" id="kH"></div></div>
+    <button class="btn" onclick="saveCheckin()">Enregistrer le check-in</button>
+  </div>
+  <div class="card" id="decisionCard" style="display:none">
+    <h3>Décision du coach</h3>
+    <div id="decisionBox"></div>
+  </div>
+  <div class="card">
+    <h3>Tendances · 3 semaines glissantes</h3>
+    <p class="sub">Le ruban bat la balance : poids stable + taille en baisse = recomposition réussie.</p>
+    <div class="eyebrow" style="margin-top:10px">Poids (kg)</div>
+    <canvas class="chart" id="chartW" height="140"></canvas>
+    <div class="eyebrow" style="margin-top:14px">Tour de taille (cm)</div>
+    <canvas class="chart" id="chartT" height="140"></canvas>
+    <div id="checkHist"></div>
+  </div>
+</section>
+
+<!-- ════════ ASSIETTE ════════ -->
+<section class="view" id="v-food">
+  <div class="card">
+    <div class="eyebrow" id="foodDate">Aujourd'hui</div>
+    <h2>Assiette du jour</h2>
+    <p class="sub">Zéro comptage de calories. Cinq repères qualitatifs — coche honnêtement, le score fait le reste.</p>
+  </div>
+  <div class="card" id="foodChecks"></div>
+  <div class="card">
+    <h3>Score du jour : <span class="num" id="foodScore">0/5</span></h3>
+    <div id="foodAdvice"></div>
+    <p class="muted-note">Règle 80/20 : vise 6 jours pleins + 1 jour à 80 % par semaine. La constance, pas la perfection.</p>
+  </div>
+  <div class="card">
+    <h3>Grab-and-go <span class="sub">— quand la journée déraille</span></h3>
+    <table class="hist">
+      <tr><th>Combinaison</th><th>Prot.</th></tr>
+      <tr><td style="font-family:inherit">Sardines + galettes de riz</td><td>25 g</td></tr>
+      <tr><td style="font-family:inherit">Shaker whey + banane</td><td>30 g</td></tr>
+      <tr><td style="font-family:inherit">2 œufs durs + 1 pomme</td><td>14 g</td></tr>
+      <tr><td style="font-family:inherit">Skyr 200 g + 30 g amandes</td><td>25 g</td></tr>
+      <tr><td style="font-family:inherit">Beef jerky halal 50 g + fruits secs</td><td>25 g</td></tr>
+      <tr><td style="font-family:inherit">Thon + galette de riz</td><td>25 g</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3>Le gabarit visuel</h3>
+    <p class="sub">À chaque repas : <b>½ légumes · ¼ protéines · ¼ féculents</b>. Les jours d'entraînement, monte les féculents (riz, pommes de terre, avoine) — tes muscles les consomment. Les jours OFF, redescends-les et garde protéines + légumes intacts.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- Chrono plein écran -->
+<div class="chronowrap" id="chrono">
+  <div class="phase" id="chPhase">—</div>
+  <div class="t" id="chTime">00:00</div>
+  <div class="zone" id="chZone"></div>
+  <div class="stepdots" id="chDots"></div>
+  <div class="next" id="chNext"></div>
+  <div class="ctr">
+    <button onclick="chronoToggle()" id="chPause">Pause</button>
+    <button onclick="chronoSkip()">Phase suiv.</button>
+    <button onclick="chronoStop()">Quitter</button>
+  </div>
+</div>
+
+<!-- Glossaire -->
+<div class="modal" id="glossModal" onclick="if(event.target===this)closeGloss()">
+  <div class="sheet">
+    <h3>Glossaire <button class="btn ghost sm" onclick="closeGloss()">Fermer</button></h3>
+    <div id="glossList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<nav class="tabs">
+  <button data-v="home" class="on"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></span>Accueil</button>
+  <button data-v="train"><span class="ic"><svg viewBox="0 0 24 24"><path d="M6 7v10M18 7v10M2 9v6M22 9v6M6 12h12"/></svg></span>Séance</button>
+  <button data-v="cardio"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg></span>Cardio</button>
+  <button data-v="checkin"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 17l5-5 4 3 7-8"/></svg></span>Bilan</button>
+  <button data-v="food"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/></svg></span>Assiette</button>
+</nav>
+<script>
+/* ═══════════ Persistance (localStorage + repli mémoire) ═══════════ */
+const memStore = {};
+const store = {
+  get(k){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : (memStore[k] ?? null); }catch(e){ return memStore[k] ?? null; } },
+  set(k,v){ memStore[k]=v; try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let DB = store.get('recomp12') || { train:{}, cardio:[], checkins:[], food:{} };
+function save(){ store.set('recomp12', DB); }
+
+/* ═══════════ Programme ═══════════ */
+const START = new Date(2026,5,12);          // 12 juin 2026
+const FCMAX = 194;
+const PROGRAM = {
+  5:{ key:'UF', title:'Upper — Force', sub:'Charges lourdes, repos 2-3 min sur les compounds. RIR 2 : termine chaque série avec 2 reps en réserve.',
+     finisher:'emom',
+     exos:[
+      {n:'Développé couché', s:4, lo:5, hi:5, c:1, tip:'Omoplates rétractées, pieds au sol, coudes à 45-60°. Ne rebondis pas la barre.'},
+      {n:'Rowing barre', s:4, lo:6, hi:6, c:1, tip:'Buste à ~45°, dos plat, tire vers le bas-ventre.'},
+      {n:'Développé militaire', s:3, lo:8, hi:8, c:1, tip:'Fessiers serrés, pas de cambrure lombaire.'},
+      {n:'Tirage vertical', s:3, lo:8, hi:10, c:0, tip:'Devant la tête, coudes vers les hanches.'},
+      {n:'Curl barre EZ', s:3, lo:8, hi:10, c:0, tip:'Coudes collés au corps, zéro balancier.'},
+      {n:'Extensions triceps poulie', s:3, lo:8, hi:10, c:0, tip:'Coudes fixes, contraction complète en bas.'}]},
+  0:{ key:'LF', title:'Lower — Force', sub:'La séance reine. Squat d\'abord, système nerveux frais. RIR 2.',
+     finisher:'tabata',
+     exos:[
+      {n:'Squat barre', s:4, lo:5, hi:5, c:1, tip:'Hanche sous le genou, pousse le sol, écarte les genoux.'},
+      {n:'Soulevé de terre roumain', s:3, lo:6, hi:6, c:1, tip:'Hanches en arrière, barre collée aux cuisses, étirement des ischios.'},
+      {n:'Presse à cuisses', s:3, lo:8, hi:10, c:0, tip:'90° aux genoux, bas du dos plaqué.'},
+      {n:'Leg curl couché', s:3, lo:10, hi:12, c:0, tip:'Excentrique 3 secondes — c\'est là que ça pousse.'},
+      {n:'Mollets debout', s:4, lo:10, hi:12, c:0, tip:'Pause 1 s en haut et en bas, pas de rebond.'}]},
+  2:{ key:'UH', title:'Upper — Hypertrophie', sub:'Charges modérées, volume élevé. Double progression : reps d\'abord, charge ensuite.',
+     finisher:'emom',
+     exos:[
+      {n:'Développé incliné haltères', s:4, lo:8, hi:8, c:1, tip:'Banc à 30° max, haltères au niveau du haut des pectoraux.'},
+      {n:'Tractions', s:4, lo:0, hi:0, amrap:1, c:1, tip:'AMRAP : max de reps propres, stop à 1 de l\'échec. >12 → leste. <5 → élastique.'},
+      {n:'Développé Arnold', s:3, lo:8, hi:10, c:0, tip:'Rotation fluide des poignets en montant.'},
+      {n:'Rowing haltère 1 bras', s:3, lo:8, hi:10, c:0, tip:'Coude vers le plafond, serre l\'omoplate.'},
+      {n:'Élévations latérales', s:4, lo:12, hi:15, c:0, tip:'Jusqu\'à la ligne des épaules, pas plus.'},
+      {n:'Superset curl marteau + dips', s:3, lo:10, hi:12, c:0, tip:'Enchaîne sans repos, puis 90 s avant la série suivante.'}]},
+  3:{ key:'LH', title:'Lower — Hypertrophie', sub:'SDT en ouverture puis volume fessiers/quadris. RIR 2.',
+     finisher:'tabata',
+     exos:[
+      {n:'Soulevé de terre classique', s:4, lo:5, hi:5, c:1, tip:'Barre proche des tibias, pousse le sol. Dos rond = stop.'},
+      {n:'Squat bulgare haltères', s:3, lo:8, hi:10, c:0, tip:'Par jambe. Buste penché = fessiers, droit = quadris.'},
+      {n:'Hip thrust', s:3, lo:8, hi:10, c:0, tip:'Verrouille 1 s en haut, regard devant.'},
+      {n:'Leg extension', s:3, lo:12, hi:15, c:0, tip:'Charge modérée, contraction max, descente lente.'},
+      {n:'Mollets assis', s:4, lo:12, hi:15, c:0, tip:'Cible le soléaire — amplitude complète.'}]},
+  6:{ key:'CARDIO', title:'Cardio — 4x4 vélo', cardio:1 },
+  1:{ key:'OFF', title:'Repos', off:1 }, 4:{ key:'OFF', title:'Repos', off:1 }
+};
+const GLOSS = [
+ ['RIR','Reps In Reserve — répétitions en réserve. RIR 2 = tu termines la série en pouvant encore en faire 2. C\'est le standard du programme : dur mais propre.'],
+ ['Double progression','Tu montes d\'abord les répétitions jusqu\'au haut de la fourchette, puis tu ajoutes du poids (+2,5 kg compounds, +1-2 kg isolation) et tu repars du bas.'],
+ ['AMRAP','As Many Reps As Possible — le maximum de répétitions propres, en s\'arrêtant 1 rep avant l\'échec.'],
+ ['EMOM','Every Minute On the Minute — une tâche démarre à chaque minute ; le temps restant est ton repos.'],
+ ['Tabata','20 s d\'effort maximal / 10 s de repos, répétés 8 fois (4 min par bloc). Protocole du Dr Izumi Tabata, 1996.'],
+ ['Deload','Semaine de décharge : ~60 % des charges habituelles, mêmes séries et reps. Évacue la fatigue nerveuse — semaines 5 et 10.'],
+ ['Compound','Mouvement polyarticulaire (squat, soulevé de terre, développé couché). Toujours en début de séance, système nerveux frais.'],
+ ['EPOC','Excess Post-exercise Oxygen Consumption — l\'effet « afterburn » : le corps continue de brûler des calories après un effort intense (+6 à 15 %, utile mais pas magique).'],
+ ['NEAT','Toutes les calories brûlées hors sport structuré : marche, escaliers, ménage. Le levier caché de la perte de gras — d\'où l\'objectif 8 000 pas.'],
+ ['Refeed','1 à 3 jours d\'augmentation planifiée des glucides pour relancer la leptine, l\'énergie et la performance. Un outil, pas un craquage.'],
+ ['VO2 max','Le débit maximal d\'oxygène que ton corps peut utiliser. Le 4x4 le développe en maintenant le cœur proche de son débit maximal.'],
+ ['Recomposition','Perdre du gras et gagner du muscle en même temps. Optimal à ton profil : protéines hautes, charge progressive, sommeil.']
+];
+
+/* ═══════════ Utilitaires ═══════════ */
+const $ = id => document.getElementById(id);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmtD = d => d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+function weekNum(d=new Date()){ const ms=d-START; return Math.max(1,Math.min(12,Math.floor(ms/(7*864e5))+1)); }
+function isDeload(w){ return w===5||w===10; }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2600); }
+function range10(el, init=0, cb){
+  el.innerHTML=''; el._val=init;
+  for(let i=1;i<=10;i++){ const b=document.createElement('button'); b.type='button'; b.textContent=i;
+    if(i===init)b.classList.add('on');
+    b.onclick=()=>{ el._val=i; [...el.children].forEach(c=>c.classList.toggle('on',+c.textContent===i)); if(cb)cb(i); };
+    el.appendChild(b); }
+}
+
+/* ═══════════ Navigation ═══════════ */
+document.querySelectorAll('nav.tabs button').forEach(b=>{
+  b.onclick=()=>{ document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+    $('v-'+b.dataset.v).classList.add('on');
+    if(b.dataset.v==='home')renderHome();
+    if(b.dataset.v==='checkin')renderCheckin();
+    if(b.dataset.v==='cardio')renderCardio();
+    if(b.dataset.v==='food')renderFood();
+    window.scrollTo({top:0}); };
+});
+
+/* ═══════════ Accueil ═══════════ */
+function renderHome(){
+  const now=new Date(), w=weekNum(now), p=PROGRAM[now.getDay()];
+  $('hdrWeek').textContent='Semaine '+w+'/12'+(isDeload(w)?' · DELOAD':'');
+  $('homeDate').textContent=fmtD(now);
+  let title, sub, cta='';
+  if(!p||p.off){ title='Jour de repos'; sub='Aucune séance prévue. Mange, marche (8 000 pas), dors 7 h et plus. La croissance musculaire se produit aujourd\'hui, pas à la salle.'; }
+  else if(p.cardio){ title='Cardio — 4x4 vélo'; sub='Séance guidée de 40 min. Zone d\'effort 165-184 bpm.'; cta='<button class="btn eff" onclick="goTab(\'cardio\')">Ouvrir le cardio</button>'; }
+  else { title=p.title; sub=p.sub; cta='<button class="btn" onclick="goTab(\'train\')">Ouvrir la séance</button>'; }
+  if(p&&!p.off&&!p.cardio&&isDeload(w)) sub='DELOAD — '+sub+' Cette semaine : ~60 % des charges, mêmes reps.';
+  $('homeTitle').textContent=title; $('homeSub').textContent=sub; $('homeCTA').innerHTML=cta;
+  // Rail 12 semaines
+  let rh='';
+  for(let i=1;i<=12;i++){ const cls=i<w?'done':(i===w?'cur':''); rh+='<div class="seg '+cls+(isDeload(i)?' dl':'')+'">'+i+'</div>'; }
+  $('rail').innerHTML=rh;
+  // Tuiles
+  $('tStreak').textContent=calcStreak();
+  $('tWeekScore').textContent=weekScore();
+  const lastK=DB.checkins[DB.checkins.length-1];
+  $('tWeight').textContent=lastK?lastK.w.toFixed(1):'79.0';
+  renderAdvice();
+}
+function goTab(v){ document.querySelector('nav.tabs button[data-v="'+v+'"]').click(); }
+function calcStreak(){
+  let s=0; const d=new Date();
+  for(let i=0;i<90;i++){
+    const iso=d.toISOString().slice(0,10), dow=d.getDay(), p=PROGRAM[dow];
+    const done = (p&&p.cardio) ? DB.cardio.some(c=>c.date===iso)
+               : (p&&!p.off&&!p.cardio) ? !!DB.train[iso]
+               : (DB.food[iso]&&DB.food[iso].score>=4) || i===0 ? true : !!DB.food[iso];
+    if(p&&p.off){ s++; }                       // un jour OFF respecté compte
+    else if(done){ s++; }
+    else { if(i===0){ /* aujourd'hui pas encore fait : on ne casse pas */ } else break; }
+    d.setDate(d.getDate()-1);
+  }
+  return s;
+}
+function weekScore(){
+  // jours « pleins » des 7 derniers jours : séance faite si prévue + score assiette ≥4
+  let full=0; const d=new Date();
+  for(let i=0;i<7;i++){
+    const iso=d.toISOString().slice(0,10), p=PROGRAM[d.getDay()];
+    const trainOK = p&&p.cardio ? DB.cardio.some(c=>c.date===iso) : p&&!p.off ? !!DB.train[iso] : true;
+    const foodOK = DB.food[iso] ? DB.food[iso].score>=4 : false;
+    if(trainOK&&foodOK)full++;
+    d.setDate(d.getDate()-1);
+  }
+  return full+'/7';
+}
+
+/* ═══════════ Moteur de conseils ═══════════ */
+function renderAdvice(){
+  const out=[]; const ks=DB.checkins, cs=DB.cardio;
+  const lastK=ks[ks.length-1], prevK=ks[ks.length-2];
+  // Sommeil
+  if(lastK&&lastK.s<=5) out.push(['w','Sommeil dégradé','Saute le finisher cette semaine et protège tes 7 h.','La récupération prime : un finisher sur un corps épuisé te grille pour 3 jours.']);
+  // Cardio sous la zone
+  const lastC=cs[cs.length-1];
+  if(lastC&&lastC.avg&&lastC.avg<165) out.push(['e','Cardio sous la zone','FC moyenne '+lastC.avg+' bpm < 165 : monte la résistance d\'un cran samedi.','Sous 85 % de FC max, le stimulus VO2 max est insuffisant — c\'est une séance de seuil, pas un 4x4.']);
+  if(lastC&&lastC.avg&&lastC.avg>=165&&lastC.avg<=184) out.push(['g','Cardio dans la zone','FC moyenne '+lastC.avg+' bpm : calibrage parfait, ne change rien.','85-95 % de FC max maintenu = adaptation maximale du volume d\'éjection systolique.']);
+  // Décision check-in
+  if(lastK&&prevK){
+    const loss=(prevK.w-lastK.w)/prevK.w*100;
+    if(loss>1.5) out.push(['e','Perte trop rapide','-'+loss.toFixed(1)+' % en une semaine : refeed glucides sur 2 jours consécutifs.','Au-delà de 1,5 %/semaine, tu perds du muscle et la leptine s\'effondre.']);
+    else if(loss>=0.5) out.push(['g','Rythme idéal','-'+loss.toFixed(1)+' % cette semaine : continue exactement pareil.','0,5-1 %/semaine est la vitesse qui préserve le muscle.']);
+    else if(Math.abs(loss)<0.3&&prevK.t&&lastK.t&&lastK.t<prevK.t) out.push(['g','Recomposition en cours','Poids stable mais taille en baisse : c\'est précisément l\'objectif.','Le ruban bat la balance — tu échanges du gras contre du muscle.']);
+    else if(Math.abs(loss)<0.3&&prevK.t&&lastK.t&&lastK.t>=prevK.t&&ks.length>=3) out.push(['w','Stagnation','Poids et taille stables 2 semaines : réduis légèrement les portions de féculents les jours OFF.','Sans comptage, le levier le plus simple reste la taille des portions des jours de repos.']);
+  }
+  // Énergie basse
+  if(ks.length>=1&&lastK.e<5) out.push(['e','Énergie < 5/10','Refeed obligatoire + envisage un deload anticipé.','Énergie durablement basse = fatigue centrale accumulée, le signal ne ment pas.']);
+  // Stagnation de charge (compounds)
+  const stag=detectStall();
+  if(stag) out.push(['w','Charge stagnante : '+stag,'Même charge maximale 2 séances de suite : vérifie sommeil + assiette, et pense refeed.','La force est ton meilleur indicateur de préservation musculaire en déficit.']);
+  if(!out.length) out.push(['','Tout est en place','Enregistre tes séances et ton check-in du dimanche : les conseils apparaîtront ici, données à l\'appui.','Le moteur lit ton poids, ta taille, ta FC, ton sommeil et tes charges.']);
+  $('adviceBox').innerHTML=out.map(a=>'<div class="advice '+a[0]+'"><b>'+a[1]+'</b>'+a[2]+'<span class="why">Pourquoi : '+a[3]+'</span></div>').join('');
+}
+function detectStall(){
+  for(const key of ['UF','LF','UH','LH']){
+    const sess=Object.entries(DB.train).filter(([d,t])=>t.key===key).sort((a,b)=>a[0]<b[0]?-1:1);
+    if(sess.length<2)continue;
+    const a=sess[sess.length-2][1], b=sess[sess.length-1][1];
+    const ea=a.exos[0], eb=b.exos[0];
+    if(!ea||!eb)continue;
+    const ma=Math.max(...ea.sets.map(s=>+s.kg||0)), mb=Math.max(...eb.sets.map(s=>+s.kg||0));
+    if(ma>0&&mb>0&&mb<=ma) return eb.n;
+  }
+  return null;
+}
+</script>
+<script>
+/* ═══════════ Séance musculation ═══════════ */
+let curSession=null;
+function pickSession(){
+  const dow=new Date().getDay();
+  if(PROGRAM[dow]&&PROGRAM[dow].exos) return PROGRAM[dow];
+  // hors jour de muscu : proposer la prochaine séance du cycle
+  for(let i=1;i<=7;i++){ const p=PROGRAM[(dow+i)%7]; if(p&&p.exos) return p; }
+}
+function lastSessionOf(key){
+  const sess=Object.entries(DB.train).filter(([d,t])=>t.key===key).sort((a,b)=>a[0]<b[0]?-1:1);
+  return sess.length?sess[sess.length-1][1]:null;
+}
+function renderTrain(){
+  curSession=pickSession();
+  const w=weekNum(), dl=isDeload(w), prev=lastSessionOf(curSession.key);
+  const isToday=PROGRAM[new Date().getDay()]===curSession;
+  $('trainEyebrow').textContent=(isToday?'Aujourd\'hui':'Prochaine séance')+' · Semaine '+w;
+  $('trainTitle').textContent=curSession.title;
+  $('trainSub').textContent=curSession.sub;
+  $('histType').textContent='· '+curSession.title;
+  $('deloadBanner').innerHTML=dl?'<div class="advice w"><b>Semaine deload</b>Réduis toutes les charges à ~60 % (pré-rempli ci-dessous), mêmes séries et reps.<span class="why">Pourquoi : la fatigue nerveuse se réinitialise, les muscles ne fondent pas — tu reviens plus fort la semaine prochaine.</span></div>':'';
+  // Exercices
+  let html='';
+  curSession.exos.forEach((e,ix)=>{
+    const pe=prev?prev.exos[ix]:null;
+    const lastTop=pe?Math.max(...pe.sets.map(s=>+s.kg||0)):0;
+    const sugg=dl&&lastTop?Math.round(lastTop*0.6*2)/2:null;
+    // Double progression : toutes les séries au plafond → +charge
+    let flag='';
+    if(pe&&!e.amrap&&!dl){
+      const allTop=pe.sets.every(s=>(+s.reps||0)>=e.hi)&&pe.sets.some(s=>+s.kg>0);
+      flag=allTop?'<div class="prog-flag">Double progression : monte de +'+(e.c?'2,5':'1-2')+' kg et repars à '+e.lo+' reps.</div>'
+                 :'<div class="prog-flag hold">Objectif : atteindre '+e.hi+' reps sur toutes les séries avant de charger.</div>';
+    }
+    const scheme=e.amrap?e.s+' × AMRAP':e.s+' × '+(e.lo===e.hi?e.lo:e.lo+'-'+e.hi);
+    html+='<div class="exo" data-ix="'+ix+'"><div class="head"><div><div class="nm">'+e.n+'</div><div class="tip">'+e.tip+'</div></div><div class="scheme">'+scheme+'</div></div>';
+    for(let s=0;s<e.s;s++){
+      const pk=pe&&pe.sets[s]?pe.sets[s].kg:'', pr=pe&&pe.sets[s]?pe.sets[s].reps:'';
+      const ph=sugg?sugg:(pk||'kg');
+      html+='<div class="setrow"><span class="sl">S'+(s+1)+'</span>'+
+        '<input type="number" step="0.5" inputmode="decimal" placeholder="'+ph+'" data-f="kg" value="">'+
+        '<input type="number" inputmode="numeric" placeholder="'+(e.amrap?'max':(pr||e.hi))+'" data-f="reps" value="">'+
+        '<button class="ck" type="button" onclick="this.classList.toggle(\'on\');this.textContent=this.classList.contains(\'on\')?\'✓\':\'\'"></button></div>';
+    }
+    html+=flag+'</div>';
+  });
+  $('exoList').innerHTML=html;
+  renderFinisher(curSession.finisher, dl);
+  range10($('trainFeel'),0);
+  renderTrainHist();
+}
+function renderFinisher(kind, dl){
+  const c=$('finisherCard');
+  if(dl){ c.innerHTML='<h3>Finisher</h3><p class="sub">Pas de finisher en semaine deload — récupération active uniquement.</p>'; return; }
+  if(kind==='emom'){
+    c.innerHTML='<h3>Finisher · <abbr class="g" data-g="emom">EMOM</abbr> 12 min</h3>'+
+    '<p class="sub">Min 1 : 10 kettlebell swings (20 kg) · Min 2 : 12 pompes · Min 3 : 15 cal rameur. Cycle × 4, puis 3 min de marche.</p>'+
+    '<button class="btn ghost" onclick="startEMOM()">Lancer le minuteur EMOM</button>'+
+    '<p class="muted-note">À sauter si nuit courte ou si la séance a déjà tout pris — la récupération prime.</p>';
+  } else {
+    c.innerHTML='<h3>Finisher · <abbr class="g" data-g="tabata">Tabata</abbr> ×3</h3>'+
+    '<p class="sub">Bloc 1 goblet squats 15 kg · Bloc 2 mountain climbers · Bloc 3 burpees. 8 × (20 s effort / 10 s repos) par bloc, 1 min entre blocs.</p>'+
+    '<button class="btn ghost" onclick="startTabata()">Lancer le minuteur Tabata</button>'+
+    '<p class="muted-note">Toujours après les compounds, jamais avant. À sauter si les squats ont tout pris.</p>';
+  }
+}
+function saveTraining(){
+  const iso=todayISO(), exos=[];
+  document.querySelectorAll('#exoList .exo').forEach(div=>{
+    const ix=+div.dataset.ix, e=curSession.exos[ix], sets=[];
+    div.querySelectorAll('.setrow').forEach(r=>{
+      sets.push({kg:r.querySelector('[data-f=kg]').value, reps:r.querySelector('[data-f=reps]').value});
+    });
+    exos.push({n:e.n, sets});
+  });
+  const any=exos.some(e=>e.sets.some(s=>s.kg||s.reps));
+  if(!any){ toast('Renseigne au moins une série avant d\'enregistrer'); return; }
+  DB.train[iso]={key:curSession.key, title:curSession.title, exos, feel:$('trainFeel')._val||null, week:weekNum()};
+  save(); toast('Séance enregistrée — bien joué'); renderTrain(); renderHome();
+}
+function renderTrainHist(){
+  const sess=Object.entries(DB.train).filter(([d,t])=>t.key===curSession.key).sort((a,b)=>a[0]>b[0]?-1:1).slice(0,5);
+  if(!sess.length){ $('trainHist').innerHTML='<p class="sub">Aucune séance enregistrée pour l\'instant. La première trace s\'écrit aujourd\'hui.</p>'; return; }
+  let h='<table class="hist"><tr><th>Date</th><th>Exercice 1 (top)</th><th>Ressenti</th></tr>';
+  sess.forEach(([d,t])=>{
+    const e=t.exos[0], top=Math.max(...e.sets.map(s=>+s.kg||0));
+    h+='<tr><td>'+d.slice(5)+'</td><td>'+(top?top+' kg':'—')+'</td><td>'+(t.feel?t.feel+'/10':'—')+'</td></tr>';
+  });
+  $('trainHist').innerHTML=h+'</table>';
+}
+
+/* ═══════════ Chrono générique plein écran ═══════════ */
+let CH={steps:[],ix:0,left:0,h:null,paused:false};
+const PH_COLORS={prep:'#1B2733',work:'#C03A22',rest:'#1E5FA8',cool:'#1E7A52',emom:'#3A2D7D'};
+function chronoStart(steps){
+  CH={steps,ix:0,left:steps[0].d,h:null,paused:false};
+  $('chrono').classList.add('on'); document.body.style.overflow='hidden';
+  chronoPaint(); CH.h=setInterval(chronoTick,1000);
+  try{ navigator.wakeLock&&navigator.wakeLock.request('screen'); }catch(e){}
+}
+function chronoTick(){
+  if(CH.paused)return;
+  CH.left--;
+  if(CH.left<=0){
+    CH.ix++;
+    if(CH.ix>=CH.steps.length){ chronoStop(true); return; }
+    CH.left=CH.steps[CH.ix].d; beep(2);
+  } else if(CH.left<=3){ beep(1); }
+  chronoPaint();
+}
+function chronoPaint(){
+  const s=CH.steps[CH.ix];
+  $('chrono').style.background=PH_COLORS[s.k]||'#1B2733';
+  $('chPhase').textContent=s.l;
+  $('chTime').textContent=String(Math.floor(CH.left/60)).padStart(2,'0')+':'+String(CH.left%60).padStart(2,'0');
+  $('chZone').textContent=s.z||'';
+  $('chNext').textContent=CH.ix<CH.steps.length-1?'Ensuite : '+CH.steps[CH.ix+1].l:'Dernière phase';
+  const dots=CH.steps.filter(x=>x.dot).length;
+  let di=0,h='';
+  CH.steps.forEach((x,i)=>{ if(x.dot){ di++; h+='<i class="'+(i<=CH.ix&&x.dot?'on':'')+'"></i>'; }});
+  $('chDots').innerHTML=h;
+}
+function chronoToggle(){ CH.paused=!CH.paused; $('chPause').textContent=CH.paused?'Reprendre':'Pause'; }
+function chronoSkip(){ CH.left=1; }
+function chronoStop(done){
+  clearInterval(CH.h); $('chrono').classList.remove('on'); document.body.style.overflow='';
+  if(done===true) toast('Séance terminée — enregistre ton bilan');
+}
+let AC=null;
+function beep(n){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    for(let i=0;i<n;i++){
+      const o=AC.createOscillator(),g=AC.createGain();
+      o.connect(g);g.connect(AC.destination);
+      o.frequency.value=n>1?880:660;g.gain.value=.12;
+      o.start(AC.currentTime+i*.18);o.stop(AC.currentTime+i*.18+.12);
+    }
+  }catch(e){}
+}
+function startFourByFour(){
+  const Z='Zone 165-184 bpm · cadence 85-95 rpm', R='~135 bpm · pédalage léger, ne t\'arrête pas';
+  const steps=[{l:'Échauffement',d:600,k:'prep',z:'Progressif + 2-3 accélérations de 20 s sur la fin'}];
+  for(let i=1;i<=4;i++){
+    steps.push({l:'Effort '+i+'/4',d:240,k:'work',z:Z,dot:1});
+    if(i<4)steps.push({l:'Récup active',d:180,k:'rest',z:R});
+  }
+  steps.push({l:'Retour au calme',d:300,k:'cool',z:'Résistance minimale, souffle long'});
+  chronoStart(steps);
+}
+function startEMOM(){
+  const tasks=['10 kettlebell swings 20 kg','12 pompes','15 cal rameur (ou 200 m)'];
+  const steps=[];
+  for(let i=0;i<12;i++) steps.push({l:'Min '+(i+1)+'/12 — '+tasks[i%3],d:60,k:'emom',z:'Finis la tâche, le reste de la minute = repos',dot:(i%3===0)?1:0});
+  steps.push({l:'Marche inclinée',d:180,k:'cool',z:'Récupération active'});
+  chronoStart(steps);
+}
+function startTabata(){
+  const blocks=['Goblet squats 15 kg','Mountain climbers','Burpees ou battle ropes'];
+  const steps=[];
+  blocks.forEach((b,bi)=>{
+    for(let r=1;r<=8;r++){
+      steps.push({l:b+' · '+r+'/8',d:20,k:'work',z:'Effort maximal',dot:r===1?1:0});
+      steps.push({l:'Repos',d:10,k:'rest',z:''});
+    }
+    if(bi<2)steps.push({l:'Repos entre blocs',d:60,k:'prep',z:'Respire, secoue les jambes'});
+  });
+  steps.push({l:'Marche',d:180,k:'cool',z:'Récupération'});
+  chronoStart(steps);
+}
+</script>
+<script>
+/* ═══════════ Cardio : enregistrement + graphique ═══════════ */
+function renderCardio(){
+  range10($('cFeel'),0);
+  const cs=DB.cardio;
+  if(!cs.length){ $('cardioHist').innerHTML='<p class="sub" style="margin-top:8px">Première référence connue : résistance 06, pic 160 bpm (sous la zone). Objectif samedi : résistance 07-08, moyenne ≥ 165.</p>'; }
+  else{
+    let h='<table class="hist"><tr><th>Date</th><th>Rés.</th><th>FC moy</th><th>FC max</th><th>/10</th></tr>';
+    cs.slice(-6).reverse().forEach(c=>{
+      const inZone=c.avg>=165&&c.avg<=184;
+      h+='<tr><td>'+c.date.slice(5)+'</td><td>'+(c.r||'—')+'</td><td style="color:'+(inZone?'var(--ok)':'var(--effort)')+'">'+(c.avg||'—')+'</td><td>'+(c.max||'—')+'</td><td>'+(c.feel||'—')+'</td></tr>';
+    });
+    $('cardioHist').innerHTML=h+'</table>';
+  }
+  drawLine($('chartCardio'), cs.map(c=>+c.avg).filter(Boolean), {band:[165,184], min:130, max:195});
+}
+function saveCardio(){
+  const r=+$('cR').value||null, mx=+$('cMax').value||null, av=+$('cAvg').value||null, f=$('cFeel')._val||null;
+  if(!av&&!mx){ toast('Renseigne au moins une FC'); return; }
+  DB.cardio.push({date:todayISO(), r, max:mx, avg:av, feel:f});
+  save();
+  $('cR').value='';$('cMax').value='';$('cAvg').value='';
+  toast(av&&av>=165&&av<=184?'Dans la zone — calibrage parfait':'Enregistré — vise 165-184 de moyenne');
+  renderCardio(); renderHome();
+}
+
+/* ═══════════ Check-in + moteur de décision ═══════════ */
+function renderCheckin(){
+  range10($('kE'),0); range10($('kS'),0); range10($('kH'),0);
+  const ks=DB.checkins;
+  drawLine($('chartW'), ks.map(k=>k.w), {min:70,max:81});
+  drawLine($('chartT'), ks.map(k=>k.t).filter(Boolean), {});
+  if(ks.length){
+    let h='<table class="hist"><tr><th>Date</th><th>Poids</th><th>Taille</th><th>Énergie</th><th>Sommeil</th></tr>';
+    ks.slice(-6).reverse().forEach(k=>{ h+='<tr><td>'+k.date.slice(5)+'</td><td>'+k.w.toFixed(1)+'</td><td>'+(k.t||'—')+'</td><td>'+k.e+'/10</td><td>'+k.s+'/10</td></tr>'; });
+    $('checkHist').innerHTML=h+'</table>';
+    showDecision();
+  } else $('checkHist').innerHTML='<p class="sub" style="margin-top:8px">Premier check-in dimanche soir : poids (moyenne 3 matins), taille au nombril, énergie, sommeil, humeur.</p>';
+}
+function saveCheckin(){
+  const w=+$('kW').value, t=+$('kT').value||null;
+  const e=$('kE')._val, s=$('kS')._val, hm=$('kH')._val;
+  if(!w||!e||!s){ toast('Poids, énergie et sommeil sont obligatoires'); return; }
+  DB.checkins.push({date:todayISO(), w, t, e, s, h:hm});
+  save(); $('kW').value='';$('kT').value='';
+  toast('Check-in enregistré'); renderCheckin(); renderHome();
+}
+function showDecision(){
+  const ks=DB.checkins, k=ks[ks.length-1], p=ks[ks.length-2];
+  $('decisionCard').style.display='block';
+  let d;
+  if(!p){ d=['cob','Première référence posée','Reviens dimanche prochain : dès deux points, le moteur de décision compare et recommande.','Une mesure isolée ne dit rien ; une tendance dit tout.']; }
+  else{
+    const loss=(p.w-k.w)/p.w*100, waistDown=p.t&&k.t&&k.t<p.t;
+    if(k.e<5&&k.s<5) d=['e','Refeed obligatoire + deload anticipé','Énergie et sommeil au plancher : +400 kcal de glucides sur 2 jours, et allège la semaine.','La fatigue centrale est le seul signal qui justifie de casser le plan.'];
+    else if(loss>1.5) d=['e','Refeed : +glucides 2 jours consécutifs','Tu perds à -'+loss.toFixed(1)+' %/semaine, trop vite : riz, pommes de terre, avoine en plus 2 jours de suite.','Au-delà de 1,5 %/sem, la perte mord dans le muscle et la leptine chute.'];
+    else if(loss>=0.5) d=['g','Continuer, c\'est parfait','-'+loss.toFixed(1)+' % cette semaine avec l\'objectif 0,5-1 % : ne change rien.','C\'est la vitesse de croisière qui transforme sans casser.'];
+    else if(waistDown) d=['g','Recomp idéale — continuer','Poids quasi stable mais tour de taille en baisse : exactement le scénario recherché.','Tu remplaces du gras par du muscle à poids constant — le ruban le prouve.'];
+    else if(ks.length>=3) d=['w','Réduire légèrement les jours OFF','Poids et taille stables sur 2 semaines : diminue un peu les féculents des jours de repos.','Sans compter les calories, la portion des jours OFF est ton levier le plus simple.'];
+    else d=['cob','Encore une semaine de données','Tendance pas encore lisible : tiens le cadre une semaine de plus avant d\'ajuster.','On ne pilote jamais sur moins de 2-3 points.'];
+  }
+  $('decisionBox').innerHTML='<div class="advice '+(d[0]==='cob'?'':d[0])+'"><b>'+d[1]+'</b>'+d[2]+'<span class="why">Pourquoi : '+d[3]+'</span></div>';
+}
+
+/* ═══════════ Assiette (sans calories) ═══════════ */
+const FOOD_ITEMS=[
+ ['Protéines à chaque repas','Poulet, œufs, sardines, skyr, viande hachée — la brique non négociable de la recomp.'],
+ ['3 à 3,5 L d\'eau','Ajoute une pincée de sel si grosse transpiration — performance et anti-crampes.'],
+ ['Légumes à 2 repas minimum','Volume, fibres, satiété : c\'est ce qui rend le cadre tenable sans compter.'],
+ ['Assiette au gabarit','½ légumes · ¼ protéines · ¼ féculents (féculents augmentés les jours d\'entraînement).'],
+ ['8 000 pas marchés','Le NEAT est le levier caché de la perte de gras — escaliers, marche, tout compte.']
+];
+function renderFood(){
+  const iso=todayISO();
+  $('foodDate').textContent=fmtD(new Date());
+  const day=DB.food[iso]||{checks:[0,0,0,0,0],score:0};
+  let h='';
+  FOOD_ITEMS.forEach((it,i)=>{
+    h+='<div class="chk'+(day.checks[i]?' on':'')+'" onclick="toggleFood('+i+')"><div class="box">'+(day.checks[i]?'✓':'')+'</div><div><div class="lt">'+it[0]+'</div><div class="ls">'+it[1]+'</div></div></div>';
+  });
+  $('foodChecks').innerHTML=h;
+  $('foodScore').textContent=day.score+'/5';
+  const adv = day.score>=4 ? ['g','Journée pleine','Score '+day.score+'/5 : la journée compte dans tes 6 jours pleins de la semaine.','La règle 80/20 se gagne jour par jour, pas le dimanche soir.']
+            : day.score>=2 ? ['w','Journée à 80 %','Il reste des cases simples à cocher — l\'eau et la marche se rattrapent ce soir.','Un jour à 80 % ne casse rien ; deux jours à 40 % si.']
+            : ['','À toi de jouer','Coche au fil de la journée — l\'honnêteté du carnet fait sa valeur.','Ce que tu mesures s\'améliore ; ce que tu estimes dérive.'];
+  $('foodAdvice').innerHTML='<div class="advice '+adv[0]+'"><b>'+adv[1]+'</b>'+adv[2]+'<span class="why">Pourquoi : '+adv[3]+'</span></div>';
+}
+function toggleFood(i){
+  const iso=todayISO();
+  const day=DB.food[iso]||{checks:[0,0,0,0,0],score:0};
+  day.checks[i]=day.checks[i]?0:1;
+  day.score=day.checks.reduce((a,b)=>a+b,0);
+  DB.food[iso]=day; save(); renderFood(); renderHome();
+}
+
+/* ═══════════ Graphiques canvas natifs ═══════════ */
+function drawLine(cv, data, opt={}){
+  const ctx=cv.getContext&&cv.getContext('2d'); if(!ctx)return;
+  const W=cv.width=cv.offsetWidth*2||600, H=cv.height=300;
+  ctx.scale(1,1); ctx.clearRect(0,0,W,H);
+  ctx.font='22px ui-monospace,monospace'; ctx.fillStyle='#8896A4';
+  if(data.length<2){ ctx.fillText(data.length===1?'1 point — encore un pour tracer la tendance':'Pas encore de données', 20, H/2); return; }
+  const min=opt.min??Math.min(...data)-1, max=opt.max??Math.max(...data)+1;
+  const X=i=>30+(W-60)*i/(data.length-1), Y=v=>H-30-(H-60)*(v-min)/(max-min||1);
+  if(opt.band){ ctx.fillStyle='rgba(30,138,90,.12)'; ctx.fillRect(30,Y(opt.band[1]),W-60,Y(opt.band[0])-Y(opt.band[1])); }
+  ctx.strokeStyle='#DEE4EA'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(30,H-30); ctx.lineTo(W-30,H-30); ctx.stroke();
+  ctx.strokeStyle='#2447E0'; ctx.lineWidth=4; ctx.beginPath();
+  data.forEach((v,i)=>i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v))); ctx.stroke();
+  ctx.fillStyle='#141C24';
+  data.forEach((v,i)=>{ ctx.beginPath(); ctx.arc(X(i),Y(v),6,0,7); ctx.fill(); });
+  ctx.fillStyle='#5C6B78';
+  ctx.fillText(String(data[data.length-1]), X(data.length-1)-30, Y(data[data.length-1])-16);
+}
+
+/* ═══════════ Glossaire ═══════════ */
+function openGloss(){
+  $('glossList').innerHTML=GLOSS.map(g=>'<div class="gterm"><b>'+g[0]+'</b><p>'+g[1]+'</p></div>').join('');
+  $('glossModal').classList.add('on');
+}
+function closeGloss(){ $('glossModal').classList.remove('on'); }
+document.addEventListener('click',e=>{
+  const a=e.target.closest('abbr.g'); if(a) openGloss();
+});
+
+/* ═══════════ Initialisation ═══════════ */
+renderHome(); renderTrain(); renderFood();
+</script>
+</body>
+</html>
