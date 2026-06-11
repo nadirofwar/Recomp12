@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Recomp 12 — Journal de bord</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#2447E0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Recomp 12">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <style>
 :root{
   --bg:#F1F3F6; --card:#FFFFFF; --ink:#141C24; --mut:#5C6B78; --line:#DEE4EA;
@@ -260,6 +266,24 @@ abbr.g{text-decoration:underline dotted var(--cobalt);cursor:help;text-underline
     <button class="btn" onclick="saveCardio()">Enregistrer le cardio</button>
   </div>
   <div class="card">
+    <h3>Sorties libres <span class="sub">— vélo de ville, running…</span></h3>
+    <p class="sub">En bonus du programme, jamais à sa place. Intensité conversationnelle : tu dois pouvoir parler en phrases.</p>
+    <div class="frow" style="margin-top:10px"><label>Activité</label>
+      <select id="fcType">
+        <option value="Vélo de ville">Vélo de ville</option>
+        <option value="Course à pied">Course à pied</option>
+        <option value="Marche rapide">Marche rapide</option>
+        <option value="Natation">Natation</option>
+        <option value="Autre">Autre</option>
+      </select></div>
+    <div class="frow"><label>Durée (min)</label><input type="number" id="fcDur" inputmode="numeric" placeholder="35"></div>
+    <div class="frow"><label>Distance (km) — optionnel</label><input type="number" step="0.1" id="fcKm" inputmode="decimal" placeholder="8.5"></div>
+    <div class="frow"><label>Sensation /10</label><div class="range10" id="fcFeel"></div></div>
+    <div id="runWarn"></div>
+    <button class="btn ghost" onclick="saveFreeCardio()">Enregistrer la sortie</button>
+    <div id="freeHist"></div>
+  </div>
+  <div class="card">
     <h3>Progression <abbr class="g" data-g="vo2">VO2 max</abbr></h3>
     <p class="sub">FC moyenne à résistance égale : si elle baisse au fil des semaines pour le même effort, ton moteur grandit.</p>
     <canvas class="chart" id="chartCardio" height="150"></canvas>
@@ -369,6 +393,7 @@ const store = {
   set(k,v){ memStore[k]=v; try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
 let DB = store.get('recomp12') || { train:{}, cardio:[], checkins:[], food:{} };
+DB.freeCardio = DB.freeCardio || [];
 function save(){ store.set('recomp12', DB); }
 
 /* ═══════════ Programme ═══════════ */
@@ -719,7 +744,11 @@ function startTabata(){
 <script>
 /* ═══════════ Cardio : enregistrement + graphique ═══════════ */
 function renderCardio(){
-  range10($('cFeel'),0);
+  range10($('cFeel'),0); range10($('fcFeel'),0);
+  const sel=$('fcType');
+  sel.onchange=()=>{ $('runWarn').innerHTML = sel.value==='Course à pied'
+    ? '<div class="advice w"><b>Fasciite plantaire</b>Reprise très progressive : surface souple, foulée courte, et stop net à la moindre douleur au talon ou à la voûte.<span class="why">Pourquoi : la course charge le fascia à chaque impact — le vélo et la marche donnent le même cœur sans le risque.</span></div>' : ''; };
+  renderFreeHist();
   const cs=DB.cardio;
   if(!cs.length){ $('cardioHist').innerHTML='<p class="sub" style="margin-top:8px">Première référence connue : résistance 06, pic 160 bpm (sous la zone). Objectif samedi : résistance 07-08, moyenne ≥ 165.</p>'; }
   else{
@@ -731,6 +760,23 @@ function renderCardio(){
     $('cardioHist').innerHTML=h+'</table>';
   }
   drawLine($('chartCardio'), cs.map(c=>+c.avg).filter(Boolean), {band:[165,184], min:130, max:195});
+}
+function saveFreeCardio(){
+  const t=$('fcType').value, d=+$('fcDur').value||null, km=+$('fcKm').value||null, f=$('fcFeel')._val||null;
+  if(!d){ toast('Indique au moins la durée'); return; }
+  DB.freeCardio.push({date:todayISO(), t, d, km, feel:f});
+  save(); $('fcDur').value='';$('fcKm').value='';
+  toast('Sortie enregistrée — le NEAT, c\'est aussi ça');
+  renderFreeHist(); renderHome();
+}
+function renderFreeHist(){
+  const fs=DB.freeCardio;
+  if(!fs.length){ $('freeHist').innerHTML=''; return; }
+  let h='<table class="hist"><tr><th>Date</th><th>Activité</th><th>Durée</th><th>Km</th><th>/10</th></tr>';
+  fs.slice(-6).reverse().forEach(c=>{
+    h+='<tr><td>'+c.date.slice(5)+'</td><td style="font-family:inherit">'+c.t+'</td><td>'+c.d+' min</td><td>'+(c.km||'—')+'</td><td>'+(c.feel||'—')+'</td></tr>';
+  });
+  $('freeHist').innerHTML=h+'</table>';
 }
 function saveCardio(){
   const r=+$('cR').value||null, mx=+$('cMax').value||null, av=+$('cAvg').value||null, f=$('cFeel')._val||null;
@@ -842,6 +888,7 @@ document.addEventListener('click',e=>{
 });
 
 /* ═══════════ Initialisation ═══════════ */
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
 renderHome(); renderTrain(); renderFood();
 </script>
 </body>
