@@ -99,6 +99,10 @@ h3{font-size:15px;font-weight:800;margin-bottom:8px}
 .setrow .ck.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .prog-flag{margin-top:8px;font-size:12.5px;font-weight:700;color:var(--ok)}
 .prog-flag.hold{color:var(--mut);font-weight:500}
+.exsel{font-weight:800;font-size:14.5px;border:none;background:transparent;padding:0 18px 0 0;max-width:100%;
+  color:var(--ink);appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232447E0' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right center;background-size:11px}
 /* — Boutons — */
 .btn{display:block;width:100%;text-align:center;font-weight:800;font-size:14px;letter-spacing:.03em;
   padding:13px;border-radius:11px;background:var(--cobalt);color:#fff;margin-top:12px}
@@ -178,6 +182,12 @@ abbr.g{text-decoration:underline dotted var(--cobalt);cursor:help;text-underline
   display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
   text-align:center;padding:30px;transition:opacity .45s ease}
 #splash.bye{opacity:0;pointer-events:none}
+#splash{transition:opacity .6s ease}
+#splash .logo{transition:transform .6s cubic-bezier(.4,0,.2,1)}
+#splash.bye .logo{transform:scale(1.06)}
+@keyframes pulse{0%,100%{opacity:.55}50%{opacity:.85}}
+#splash .tap{animation:pulse 2.5s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){#splash .tap{animation:none;opacity:.7}#splash .logo{transition:none}#splash.bye .logo{transform:none}}
 #splash .logo{font-size:64px;font-weight:800;letter-spacing:.02em;
   animation:pop .7s cubic-bezier(.2,.8,.25,1) both}
 #splash .wk{font-family:var(--mono);font-size:14px;opacity:.85;margin-top:6px;animation:rise .7s .25s ease both}
@@ -493,34 +503,34 @@ const PROGRAM = {
      exos:[
       {n:'Développé couché', s:4, lo:5, hi:5, c:1, tip:'Omoplates rétractées, pieds au sol, coudes à 45-60°. Ne rebondis pas la barre.'},
       {n:'Rowing barre', s:4, lo:6, hi:6, c:1, tip:'Buste à ~45°, dos plat, tire vers le bas-ventre.'},
-      {n:'Développé militaire', s:3, lo:8, hi:8, c:1, tip:'Fessiers serrés, pas de cambrure lombaire.'},
-      {n:'Tirage vertical', s:3, lo:8, hi:10, c:0, tip:'Devant la tête, coudes vers les hanches.'},
-      {n:'Curl barre EZ', s:3, lo:8, hi:10, c:0, tip:'Coudes collés au corps, zéro balancier.'},
-      {n:'Extensions triceps poulie', s:3, lo:8, hi:10, c:0, tip:'Coudes fixes, contraction complète en bas.'}]},
+      {n:'Développé militaire', s:4, lo:8, hi:8, c:1, tip:'Fessiers serrés, pas de cambrure lombaire.'},
+      {n:'Tirage vertical', s:4, lo:8, hi:10, c:0, tip:'Devant la tête, coudes vers les hanches.'},
+      {n:'Curl barre EZ', s:4, lo:8, hi:10, c:0, tip:'Coudes collés au corps, zéro balancier.'},
+      {n:'Extensions triceps poulie', s:4, lo:8, hi:10, c:0, tip:'Coudes fixes, contraction complète en bas.'}]},
   0:{ key:'LF', title:'Lower — Force', sub:'La séance reine. Squat d\'abord, système nerveux frais. RIR 2.',
      finisher:'tabata',
      exos:[
       {n:'Squat barre', s:4, lo:5, hi:5, c:1, tip:'Hanche sous le genou, pousse le sol, écarte les genoux.'},
-      {n:'Soulevé de terre roumain', s:3, lo:6, hi:6, c:1, tip:'Hanches en arrière, barre collée aux cuisses, étirement des ischios.'},
-      {n:'Presse à cuisses', s:3, lo:8, hi:10, c:0, tip:'90° aux genoux, bas du dos plaqué.'},
-      {n:'Leg curl couché', s:3, lo:10, hi:12, c:0, tip:'Excentrique 3 secondes — c\'est là que ça pousse.'},
+      {n:'Soulevé de terre roumain', s:4, lo:6, hi:6, c:1, tip:'Hanches en arrière, barre collée aux cuisses, étirement des ischios.'},
+      {n:'Presse à cuisses', s:4, lo:8, hi:10, c:0, tip:'90° aux genoux, bas du dos plaqué.'},
+      {n:'Leg curl couché', s:4, lo:10, hi:12, c:0, tip:'Excentrique 3 secondes — c\'est là que ça pousse.'},
       {n:'Mollets debout', s:4, lo:10, hi:12, c:0, tip:'Pause 1 s en haut et en bas, pas de rebond.'}]},
   2:{ key:'UH', title:'Upper — Hypertrophie', sub:'Charges modérées, volume élevé. Double progression : reps d\'abord, charge ensuite.',
      finisher:'emom',
      exos:[
       {n:'Développé incliné haltères', s:4, lo:8, hi:8, c:1, tip:'Banc à 30° max, haltères au niveau du haut des pectoraux.'},
       {n:'Tractions', s:4, lo:0, hi:0, amrap:1, c:1, tip:'AMRAP : max de reps propres, stop à 1 de l\'échec. >12 → leste. <5 → élastique.'},
-      {n:'Développé Arnold', s:3, lo:8, hi:10, c:0, tip:'Rotation fluide des poignets en montant.'},
-      {n:'Rowing haltère 1 bras', s:3, lo:8, hi:10, c:0, tip:'Coude vers le plafond, serre l\'omoplate.'},
+      {n:'Développé Arnold', s:4, lo:8, hi:10, c:0, tip:'Rotation fluide des poignets en montant.'},
+      {n:'Rowing haltère 1 bras', s:4, lo:8, hi:10, c:0, tip:'Coude vers le plafond, serre l\'omoplate.'},
       {n:'Élévations latérales', s:4, lo:12, hi:15, c:0, tip:'Jusqu\'à la ligne des épaules, pas plus.'},
-      {n:'Superset curl marteau + dips', s:3, lo:10, hi:12, c:0, tip:'Enchaîne sans repos, puis 90 s avant la série suivante.'}]},
+      {n:'Superset curl marteau + dips', s:4, lo:10, hi:12, c:0, tip:'Enchaîne sans repos, puis 90 s avant la série suivante.'}]},
   3:{ key:'LH', title:'Lower — Hypertrophie', sub:'SDT en ouverture puis volume fessiers/quadris. RIR 2.',
      finisher:'tabata',
      exos:[
       {n:'Soulevé de terre classique', s:4, lo:5, hi:5, c:1, tip:'Barre proche des tibias, pousse le sol. Dos rond = stop.'},
-      {n:'Squat bulgare haltères', s:3, lo:8, hi:10, c:0, tip:'Par jambe. Buste penché = fessiers, droit = quadris.'},
-      {n:'Hip thrust', s:3, lo:8, hi:10, c:0, tip:'Verrouille 1 s en haut, regard devant.'},
-      {n:'Leg extension', s:3, lo:12, hi:15, c:0, tip:'Charge modérée, contraction max, descente lente.'},
+      {n:'Squat bulgare haltères', s:4, lo:8, hi:10, c:0, tip:'Par jambe. Buste penché = fessiers, droit = quadris.'},
+      {n:'Hip thrust', s:4, lo:8, hi:10, c:0, tip:'Verrouille 1 s en haut, regard devant.'},
+      {n:'Leg extension', s:4, lo:12, hi:15, c:0, tip:'Charge modérée, contraction max, descente lente.'},
       {n:'Mollets assis', s:4, lo:12, hi:15, c:0, tip:'Cible le soléaire — amplitude complète.'}]},
   6:{ key:'CARDIO', title:'Cardio — 4x4 vélo', cardio:1 },
   1:{ key:'OFF', title:'Repos', off:1 }, 4:{ key:'OFF', title:'Repos', off:1 }
@@ -651,7 +661,7 @@ function detectStall(){
     if(sess.length<2)continue;
     const a=sess[sess.length-2][1], b=sess[sess.length-1][1];
     const ea=a.exos[0], eb=b.exos[0];
-    if(!ea||!eb)continue;
+    if(!ea||!eb||ea.n!==eb.n)continue;
     const ma=Math.max(...ea.sets.map(s=>+s.kg||0)), mb=Math.max(...eb.sets.map(s=>+s.kg||0));
     if(ma>0&&mb>0&&mb<=ma) return eb.n;
   }
@@ -659,6 +669,46 @@ function detectStall(){
 }
 </script>
 <script>
+
+/* ═══════════ Variantes d'exercices (même schéma moteur) ═══════════ */
+const VARIANTS = {
+ 'Développé couché':[['Développé couché','Omoplates rétractées, coudes à 45-60°, pas de rebond.'],['Développé haltères','Plus d\u2019amplitude et de stabilité à gérer — descente contrôlée.'],['Développé machine convergente','Trajectoire guidée, idéal si épaule sensible.'],['Pompes lestées','Gilet ou disque sur le dos, corps gainé en planche.']],
+ 'Rowing barre':[['Rowing barre','Buste à ~45°, dos plat, tire vers le bas-ventre.'],['Rowing haltère 1 bras','Genou sur banc, coude vers le plafond.'],['Tirage horizontal poulie','Buste fixe, serre les omoplates en fin de tirage.'],['Rowing machine','Poitrine calée, concentre-toi sur le dos, pas les bras.']],
+ 'Développé militaire':[['Développé militaire','Fessiers serrés, pas de cambrure lombaire.'],['Développé haltères assis','Dossier à 80-85°, coudes légèrement devant.'],['Développé Arnold','Rotation fluide des poignets en montant.'],['Machine épaules','Trajectoire guidée, charge progressive sans stress lombaire.']],
+ 'Tirage vertical':[['Tirage vertical','Devant la tête, coudes vers les hanches.'],['Tractions','Max de reps propres, élastique si besoin.'],['Tirage prise neutre','Prise marteau, plus douce pour coudes et épaules.']],
+ 'Curl barre EZ':[['Curl barre EZ','Coudes collés au corps, zéro balancier.'],['Curl haltères','Alterné ou simultané, supination complète en haut.'],['Curl pupitre','Bras calés, impossible de tricher.'],['Curl marteau','Prise neutre, cible aussi le brachial.']],
+ 'Extensions triceps poulie':[['Extensions triceps poulie','Coudes fixes, contraction complète en bas.'],['Barre au front','Descente vers le front, coudes serrés.'],['Extension haltère nuque','Un ou deux bras, amplitude complète derrière la tête.'],['Dips lestés','Buste légèrement penché, descente à 90°.']],
+ 'Squat barre':[['Squat barre','Hanche sous le genou, pousse le sol, écarte les genoux.'],['Squat gobelet','Haltère contre la poitrine, buste droit, très sûr.'],['Presse à cuisses','90° aux genoux, bas du dos plaqué.'],['Hack squat','Machine guidée, profondeur contrôlée.']],
+ 'Soulevé de terre roumain':[['Soulevé de terre roumain','Hanches en arrière, barre collée aux cuisses.'],['Good morning','Barre sur trapèzes, charnière de hanche stricte, charge modérée.'],['Leg curl assis','Isolation ischios, excentrique lent.'],['Hip thrust','Verrouille 1 s en haut, regard devant.']],
+ 'Presse à cuisses':[['Presse à cuisses','90° aux genoux, bas du dos plaqué.'],['Squat bulgare haltères','Pied arrière surélevé, par jambe.'],['Fentes marchées','Grands pas, genou arrière frôle le sol.'],['Leg extension','Contraction max en haut, descente lente.']],
+ 'Leg curl couché':[['Leg curl couché','Excentrique 3 secondes — c\u2019est là que ça pousse.'],['Leg curl assis','Même logique, position différente du bassin.'],['SDT jambes tendues haltères','Étirement profond des ischios, dos plat.'],['Nordic curl','Très exigeant — partenaire ou cale-pieds requis.']],
+ 'Mollets debout':[['Mollets debout','Pause 1 s en haut et en bas, pas de rebond.'],['Mollets à la presse','Amplitude complète, charge lourde possible.'],['Mollets unilatéral haltère','Une jambe à la fois, équilibre contre un mur.']],
+ 'Développé incliné haltères':[['Développé incliné haltères','Banc à 30° max, haltères au haut des pectoraux.'],['Développé incliné barre','Même angle, prise légèrement plus large que les épaules.'],['Développé incliné machine','Trajectoire guidée, tension continue.'],['Écartés inclinés','Coudes semi-fléchis, étirement contrôlé, charge légère.']],
+ 'Tractions':[['Tractions','AMRAP : max de reps propres, stop à 1 de l\u2019échec.'],['Tirage vertical','Devant la tête, coudes vers les hanches.'],['Tirage prise neutre','Prise marteau, plus douce pour les coudes.'],['Tractions australiennes','Corps incliné sous une barre basse, plus accessible.']],
+ 'Développé Arnold':[['Développé Arnold','Rotation fluide des poignets en montant.'],['Développé haltères assis','Trajectoire verticale classique.'],['Élévations frontales','Haltère ou disque, jusqu\u2019à la ligne des yeux.'],['Machine épaules','Charge progressive sans stress lombaire.']],
+ 'Rowing haltère 1 bras':[['Rowing haltère 1 bras','Coude vers le plafond, serre l\u2019omoplate.'],['Tirage horizontal poulie','Buste fixe, serre les omoplates.'],['Rowing machine','Poitrine calée, focus dos.'],['Rowing barre','Buste à ~45°, tire vers le bas-ventre.']],
+ 'Élévations latérales':[['Élévations latérales','Jusqu\u2019à la ligne des épaules, pas plus.'],['Élévations latérales poulie','Tension continue sur toute l\u2019amplitude.'],['Machine élévations latérales','Trajectoire guidée, idéale en fin de séance.']],
+ 'Superset curl marteau + dips':[['Superset curl marteau + dips','Enchaîne sans repos, puis 90 s.'],['Curl marteau','Prise neutre, coudes fixes.'],['Dips','Buste droit pour les triceps, penché pour les pectoraux.'],['Superset curl EZ + extensions poulie','Même logique antagoniste, matériel différent.']],
+ 'Soulevé de terre classique':[['Soulevé de terre classique','Barre proche des tibias, pousse le sol. Dos rond = stop.'],['Soulevé de terre trap bar','Prise neutre, dos plus vertical, très sûr.'],['Soulevé de terre sumo','Pieds larges, buste plus droit.'],['Rack pull','Départ surélevé, surcharge le haut du mouvement.']],
+ 'Squat bulgare haltères':[['Squat bulgare haltères','Par jambe. Buste penché = fessiers, droit = quadris.'],['Fentes marchées','Grands pas, genou arrière frôle le sol.'],['Step-up','Boîte à hauteur de genou, pousse sur le talon.'],['Presse unilatérale','Une jambe, contrôle total de la descente.']],
+ 'Hip thrust':[['Hip thrust','Verrouille 1 s en haut, regard devant.'],['Glute bridge haltère','Au sol, plus simple à installer.'],['Hip thrust machine','Réglage rapide, tension constante.'],['Kickback poulie','Isolation fessier, par jambe.']],
+ 'Leg extension':[['Leg extension','Contraction max en haut, descente lente.'],['Squat gobelet léger','Tempo lent 3-1-3, brûle garanti.'],['Sissy squat','Genoux avancés, quadris en étirement extrême — charge nulle.']],
+ 'Mollets assis':[['Mollets assis','Cible le soléaire — amplitude complète.'],['Mollets debout','Genoux tendus, cible les jumeaux.'],['Mollets à la presse','Amplitude complète, charge lourde possible.']]
+};
+DB.variants = DB.variants || {};
+function setVariant(key,ix,name){ DB.variants[key+':'+ix]=name; save(); renderTrain(); }
+function resolvedExo(cs,ix){
+  const e=cs.exos[ix], fam=VARIANTS[e.n]||[[e.n,e.tip]];
+  const chosen=DB.variants[cs.key+':'+ix]||e.n;
+  const v=fam.find(f=>f[0]===chosen)||fam[0];
+  return {name:v[0], tip:v[1], fam, slot:e};
+}
+function lastExo(name){
+  const sess=Object.entries(DB.train).sort((a,b)=>a[0]>b[0]?-1:1);
+  for(const [d,t] of sess){ const e=t.exos.find(x=>x.n===name); if(e)return e; }
+  return null;
+}
+
 /* ═══════════ Séance musculation ═══════════ */
 let curSession=null;
 function pickSession(){
@@ -683,18 +733,22 @@ function renderTrain(){
   // Exercices
   let html='';
   curSession.exos.forEach((e,ix)=>{
-    const pe=prev?prev.exos[ix]:null;
-    const lastTop=pe?Math.max(...pe.sets.map(s=>+s.kg||0)):0;
+    const R=resolvedExo(curSession,ix);
+    const pe=lastExo(R.name);
+    const lastTop=pe?Math.max(0,...pe.sets.map(s=>+s.kg||0)):0;
     const sugg=dl&&lastTop?Math.round(lastTop*0.6*2)/2:null;
-    // Double progression : toutes les séries au plafond → +charge
+    // Double progression : 4 séries au plafond → +charge (suivie par exercice réel)
     let flag='';
     if(pe&&!e.amrap&&!dl){
       const allTop=pe.sets.every(s=>(+s.reps||0)>=e.hi)&&pe.sets.some(s=>+s.kg>0);
       flag=allTop?'<div class="prog-flag">Double progression : monte de +'+(e.c?'2,5':'1-2')+' kg et repars à '+e.lo+' reps.</div>'
-                 :'<div class="prog-flag hold">Objectif : atteindre '+e.hi+' reps sur toutes les séries avant de charger.</div>';
+                 :'<div class="prog-flag hold">Objectif : '+e.hi+' reps sur les 4 séries avant de charger.</div>';
     }
-    const scheme=e.amrap?e.s+' × AMRAP':e.s+' × '+(e.lo===e.hi?e.lo:e.lo+'-'+e.hi);
-    html+='<div class="exo" data-ix="'+ix+'"><div class="head"><div><div class="nm">'+e.n+'</div><div class="tip">'+e.tip+'</div></div><div class="scheme">'+scheme+'</div></div>';
+    const scheme=e.amrap?'4 × AMRAP':'4 × '+(e.lo===e.hi?e.lo:e.lo+'-'+e.hi);
+    let selHtml='<select class="exsel" onchange="setVariant(\''+curSession.key+'\','+ix+',this.value)">';
+    R.fam.forEach(f=>{ selHtml+='<option'+(f[0]===R.name?' selected':'')+'>'+f[0]+'</option>'; });
+    selHtml+='</select>';
+    html+='<div class="exo" data-ix="'+ix+'"><div class="head"><div style="min-width:0">'+selHtml+'<div class="tip">'+R.tip+'</div></div><div class="scheme">'+scheme+'</div></div>';
     for(let s=0;s<e.s;s++){
       const pk=pe&&pe.sets[s]?pe.sets[s].kg:'', pr=pe&&pe.sets[s]?pe.sets[s].reps:'';
       const ph=sugg?sugg:(pk||'kg');
@@ -728,11 +782,11 @@ function renderFinisher(kind, dl){
 function saveTraining(){
   const iso=todayISO(), exos=[];
   document.querySelectorAll('#exoList .exo').forEach(div=>{
-    const ix=+div.dataset.ix, e=curSession.exos[ix], sets=[];
+    const ix=+div.dataset.ix, R=resolvedExo(curSession,ix), sets=[];
     div.querySelectorAll('.setrow').forEach(r=>{
       sets.push({kg:r.querySelector('[data-f=kg]').value, reps:r.querySelector('[data-f=reps]').value});
     });
-    exos.push({n:e.n, sets});
+    exos.push({n:R.name, sets});
   });
   const any=exos.some(e=>e.sets.some(s=>s.kg||s.reps));
   if(!any){ toast('Renseigne au moins une série avant d\'enregistrer'); return; }
@@ -999,9 +1053,8 @@ function showSplash(){
   const q=QUOTES[Math.floor(Math.random()*QUOTES.length)];
   $('splWk').textContent='Semaine '+weekNum()+' / 12';
   $('splQ').textContent=q[0]; $('splS').textContent=q[1];
-  setTimeout(hideSplash, 2300);
 }
-function hideSplash(){ const s=$('splash'); if(s){ s.classList.add('bye'); setTimeout(()=>s.remove(), 500); } }
+function hideSplash(){ const s=$('splash'); if(s){ s.classList.add('bye'); setTimeout(()=>s.remove(), 650); } }
 
 /* ═══════════ Moteur graphique (Canvas natif, animé, tactile) ═══════════ */
 const REDUCED = (typeof matchMedia==='function') ? matchMedia('(prefers-reduced-motion: reduce)').matches : false;
