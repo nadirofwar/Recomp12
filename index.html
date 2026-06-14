@@ -275,6 +275,7 @@ canvas.chartL{width:100%;height:190px;display:block;margin-top:6px;touch-action:
       <tr><td>Mer</td><td style="font-family:inherit">Lower — Hypertrophie</td></tr>
       <tr><td>Lun · Jeu</td><td style="font-family:inherit;color:var(--mut)">Repos complet — la croissance se fait là</td></tr>
     </table>
+    <div id="reschedJournal"></div>
   </div>
 </section>
 
@@ -303,10 +304,11 @@ canvas.chartL{width:100%;height:190px;display:block;margin-top:6px;touch-action:
 <!-- ════════ CARDIO ════════ -->
 <section class="view" id="v-cardio">
   <div class="card">
-    <div class="eyebrow">Samedi · Vélo</div>
-    <h2>4x4 norvégien</h2>
-    <p class="sub">10 min échauffement · 4 × (4 min effort / 3 min récup active) · 5 min retour au calme. Zone d'effort : <b>165-184 bpm</b> (85-95 % de ta FC max 194). Récup : ~135 bpm, sans cesser de pédaler.</p>
-    <button class="btn eff" onclick="startFourByFour()">Lancer la séance guidée — 40 min</button>
+    <div class="eyebrow">Cardio · samedi</div>
+    <h2>Séance cardio</h2>
+    <p class="sub">Plusieurs formats selon ta forme du jour. Vu ton seuil actuel (essoufflement vers 130 bpm), commence par la Zone 2 : c'est elle qui construit la base avant les intervalles.</p>
+    <div id="cardioMenu"></div>
+    <div id="cardioDetail"></div>
   </div>
   <div class="card">
     <h3>Bilan post-séance</h3>
@@ -315,6 +317,18 @@ canvas.chartL{width:100%;height:190px;display:block;margin-top:6px;touch-action:
     <div class="frow"><label>FC moyenne sur les efforts (bpm)</label><input type="number" id="cAvg" inputmode="numeric" placeholder="168"></div>
     <div class="frow"><label>Sensation /10</label><div class="range10" id="cFeel"></div></div>
     <button class="btn" onclick="saveCardio()">Enregistrer le cardio</button>
+  </div>
+  <div class="card" id="circuitCard">
+    <div class="eyebrow">Circuit au poids du corps</div>
+    <h3>5-10-10</h3>
+    <p class="sub">1 tour = 5 tractions · 10 pompes · 10 squats. Objectif ultime : 40 tours en une séance (200 tractions, 400 pompes, 400 squats). On y va progressivement.</p>
+    <div id="circuitTarget"></div>
+    <div id="circuitProgress"></div>
+    <button class="btn eff" onclick="startCircuit()">Démarrer le circuit</button>
+    <div class="frow" style="margin-top:14px"><label>Ou saisir un résultat manuellement — tours réalisés</label><input type="number" id="circManual" inputmode="numeric" placeholder="8"></div>
+    <div class="frow"><label>Sensation /10</label><div class="range10" id="circFeel"></div></div>
+    <button class="btn ghost" onclick="saveCircuitManual()">Enregistrer ce résultat</button>
+    <div id="circuitHist"></div>
   </div>
   <div class="card">
     <h3>Sorties libres <span class="sub">— vélo de ville, running…</span></h3>
@@ -492,6 +506,8 @@ const store = {
 };
 let DB = store.get('recomp12') || { train:{}, cardio:[], checkins:[], food:{} };
 DB.freeCardio = DB.freeCardio || [];
+DB.reschedules = DB.reschedules || [];
+DB.circuit = DB.circuit || [];
 function save(){ store.set('recomp12', DB); }
 
 /* ═══════════ Programme ═══════════ */
@@ -580,15 +596,104 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
 });
 
 /* ═══════════ Accueil ═══════════ */
+
+/* ═══════════ Décalage de séances (avec justificatif) ═══════════ */
+const RESCHEDULE_MOTIFS=[
+ ['depl','Déplacement professionnel'],['voyage','Voyage'],['maladie','Maladie'],
+ ['blessure','Blessure'],['famille','Contrainte familiale'],['autre','Autre']
+];
+function origSessionFor(iso){
+  // séance initialement prévue ce jour-là (selon le programme fixe)
+  const dow=new Date(iso+'T12:00:00').getDay();
+  const p=PROGRAM[dow];
+  return (p&&(p.exos||p.cardio))?p:null;
+}
+function reschedTo(iso){
+  // si une séance a été décalée VERS cette date, la renvoyer
+  const r=DB.reschedules.find(x=>x.to===iso);
+  if(!r)return null;
+  const dow=new Date(r.from+'T12:00:00').getDay();
+  return PROGRAM[dow]||null;
+}
+function reschedFrom(iso){
+  // cette date a-t-elle été vidée par un décalage ?
+  return DB.reschedules.find(x=>x.from===iso)||null;
+}
+function effectiveSession(iso){
+  // séance réellement à faire ce jour : décalée entrante OU prévue (sauf si décalée sortante)
+  const moved=reschedTo(iso); if(moved)return {p:moved,moved:true};
+  if(reschedFrom(iso))return {p:null,vacated:true};
+  const p=origSessionFor(iso); return p?{p,moved:false}:{p:null};
+}
+function openReschedule(){
+  const today=todayISO();
+  const es=effectiveSession(today);
+  if(!es.p||es.p.off){ toast('Aucune séance à décaler aujourd\'hui'); return; }
+  let opts=RESCHEDULE_MOTIFS.map(m=>'<option value="'+m[0]+'">'+m[1]+'</option>').join('');
+  const html='<h3>Décaler la séance <button class="btn ghost sm" onclick="closeSheet()">Fermer</button></h3>'+
+    '<p class="sub">La régularité prime. Un report ne se justifie que par une vraie contrainte — sinon, mieux vaut une séance allégée que pas de séance.</p>'+
+    '<div class="frow" style="margin-top:12px"><label>Motif obligatoire</label><select id="rsMotif"><option value="">— Choisir un motif —</option>'+opts+'</select></div>'+
+    '<div class="frow" id="rsOtherWrap" style="display:none"><label>Préciser</label><input id="rsOther" placeholder="Ex : examen médical"></div>'+
+    '<div class="frow"><label>Décaler de</label><div class="seg2"><button class="on" id="rs1" onclick="rsDays=1;document.getElementById(\'rs1\').classList.add(\'on\');document.getElementById(\'rs2\').classList.remove(\'on\')">1 jour</button><button id="rs2" onclick="rsDays=2;document.getElementById(\'rs2\').classList.add(\'on\');document.getElementById(\'rs1\').classList.remove(\'on\')">2 jours</button></div></div>'+
+    '<div id="rsWarn"></div>'+
+    '<button class="btn" onclick="confirmReschedule()">Confirmer le décalage</button>'+
+    '<button class="btn ghost" onclick="closeSheet()">Plutôt faire une séance allégée aujourd\'hui</button>';
+  openSheet(html);
+  rsDays=1;
+  $('rsMotif').onchange=function(){ $('rsOtherWrap').style.display=this.value==='autre'?'block':'none'; };
+}
+let rsDays=1;
+function confirmReschedule(){
+  const motif=$('rsMotif').value;
+  if(!motif){ $('rsWarn').innerHTML='<div class="advice e"><b>Motif requis</b>Sélectionne une contrainte réelle. Le manque de motivation passagère ne compte pas — dans ce cas, ouvre la séance et fais ce que tu peux.</div>'; return; }
+  const label=motif==='autre'?($('rsOther').value||'Autre'):RESCHEDULE_MOTIFS.find(m=>m[0]===motif)[1];
+  const from=todayISO();
+  const to=new Date(); to.setDate(to.getDate()+rsDays); const toISO=to.toISOString().slice(0,10);
+  // éviter les doublons sur la même date d'origine
+  DB.reschedules=DB.reschedules.filter(x=>x.from!==from);
+  DB.reschedules.push({from, to:toISO, motif:label, days:rsDays});
+  save(); closeSheet();
+  toast('Séance décalée au '+fmtShort(toISO));
+  renderHome();
+}
+function fmtShort(iso){ const d=new Date(iso+'T12:00:00'); return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'}); }
+function reschedJournal(){
+  if(!DB.reschedules.length)return '';
+  const recent=DB.reschedules.slice(-5).reverse();
+  let h='<div class="divider"></div><div class="eyebrow">Journal des reports</div><table class="hist"><tr><th>Du</th><th>Au</th><th>Motif</th></tr>';
+  recent.forEach(r=>{ h+='<tr><td>'+r.from.slice(5)+'</td><td>'+r.to.slice(5)+'</td><td style="font-family:inherit">'+r.motif+'</td></tr>'; });
+  h+='</table>';
+  // alerte si reports fréquents (3+ sur 7 jours glissants)
+  const wk=Date.now()-7*864e5;
+  const cnt=DB.reschedules.filter(r=>new Date(r.from+'T12:00:00')>=wk).length;
+  if(cnt>=3) h+='<div class="advice w"><b>Reports fréquents</b>3 décalages ou plus cette semaine. Plutôt que d\'accumuler, réévalue ta charge ou ton planning : un programme allégé que tu tiens vaut mieux qu\'un programme idéal sans cesse reporté.<span class="why">Pourquoi : la constance est le seul facteur non négociable sur 12 semaines.</span></div>';
+  return h;
+}
+
+/* feuille modale générique (réutilise le style glossaire) */
+function openSheet(inner){
+  let m=$('genSheet');
+  if(!m){ m=document.createElement('div'); m.className='modal'; m.id='genSheet';
+    m.onclick=e=>{ if(e.target===m)closeSheet(); };
+    m.innerHTML='<div class="sheet" id="genSheetBody"></div>'; document.body.appendChild(m); }
+  $('genSheetBody').innerHTML=inner; m.classList.add('on');
+}
+function closeSheet(){ const m=$('genSheet'); if(m)m.classList.remove('on'); }
+
+
 function renderHome(){
-  const now=new Date(), w=weekNum(now), p=PROGRAM[now.getDay()];
+  const now=new Date(), w=weekNum(now);
+  const es=effectiveSession(todayISO()); const p=es.p;
   $('hdrWeek').textContent='Semaine '+w+'/12'+(isDeload(w)?' · DELOAD':'');
   $('homeDate').textContent=fmtD(now);
   let title, sub, cta='';
-  if(!p||p.off){ title='Jour de repos'; sub='Aucune séance prévue. Mange, marche (8 000 pas), dors 7 h et plus. La croissance musculaire se produit aujourd\'hui, pas à la salle.'; }
-  else if(p.cardio){ title='Cardio — 4x4 vélo'; sub='Séance guidée de 40 min. Zone d\'effort 165-184 bpm.'; cta='<button class="btn eff" onclick="goTab(\'cardio\')">Ouvrir le cardio</button>'; }
-  else { title=p.title; sub=p.sub; cta='<button class="btn" onclick="goTab(\'train\')">Ouvrir la séance</button>'; }
+  if(es.vacated){ title='Séance décalée'; sub='Tu as reporté la séance d\'aujourd\'hui. Repos ou activité légère — retrouve-la à sa nouvelle date.'; }
+  else if(!p||p.off){ title='Jour de repos'; sub='Aucune séance prévue. Mange, marche (8 000 pas), dors 7 h et plus. La croissance musculaire se produit aujourd\'hui, pas à la salle.'; }
+  else if(p.cardio){ title='Cardio'+(es.moved?' (décalé)':''); sub='Séance cardio guidée — choisis ton format dans l\'onglet Cardio (Zone 2 recommandée pour débuter).'; cta='<button class="btn eff" onclick="goTab(\'cardio\')">Ouvrir le cardio</button>'; }
+  else { title=p.title+(es.moved?' (décalé)':''); sub=p.sub; cta='<button class="btn" onclick="goTab(\'train\')">Ouvrir la séance</button>'; }
   if(p&&!p.off&&!p.cardio&&isDeload(w)) sub='DELOAD — '+sub+' Cette semaine : ~60 % des charges, mêmes reps.';
+  // bouton décaler si séance prévue aujourd'hui et non décalée
+  if(p&&!p.off&&!es.vacated){ cta+='<button class="btn ghost" onclick="openReschedule()">Décaler cette séance (1-2 j)</button>'; }
   $('homeTitle').textContent=title; $('homeSub').textContent=sub; $('homeCTA').innerHTML=cta;
   // Rail 12 semaines
   let rh='';
@@ -600,6 +705,7 @@ function renderHome(){
   const lastK=DB.checkins[DB.checkins.length-1];
   $('tWeight').textContent=lastK?lastK.w.toFixed(1):'79.0';
   renderAdvice();
+  if($('reschedJournal'))$('reschedJournal').innerHTML=reschedJournal();
 }
 function goTab(v){ document.querySelector('nav.tabs button[data-v="'+v+'"]').click(); }
 function calcStreak(){
@@ -712,9 +818,11 @@ function lastExo(name){
 /* ═══════════ Séance musculation ═══════════ */
 let curSession=null;
 function pickSession(){
+  // séance muscu décalée vers aujourd'hui ?
+  const es=effectiveSession(todayISO());
+  if(es.p&&es.p.exos) return es.p;
   const dow=new Date().getDay();
   if(PROGRAM[dow]&&PROGRAM[dow].exos) return PROGRAM[dow];
-  // hors jour de muscu : proposer la prochaine séance du cycle
   for(let i=1;i<=7;i++){ const p=PROGRAM[(dow+i)%7]; if(p&&p.exos) return p; }
 }
 function lastSessionOf(key){
@@ -853,16 +961,132 @@ function beep(n){
     }
   }catch(e){}
 }
-function startFourByFour(){
+
+
+/* ═══════════ Circuit 5-10-10 ═══════════ */
+const CIRCUIT_GOAL=40;
+function circuitBest(){ return DB.circuit.reduce((m,c)=>Math.max(m,c.tours||0),0); }
+function circuitTargetNext(){
+  // progression graduelle : +1 tour au-dessus du meilleur, plancher à 5, plafond 40
+  const best=circuitBest();
+  return Math.min(CIRCUIT_GOAL, Math.max(5, best+1));
+}
+function renderCircuit(){
+  range10($('circFeel'),0);
+  const best=circuitBest(), next=circuitTargetNext();
+  $('circuitTarget').innerHTML='<div class="advice"><b>Cible du jour : '+next+' tours</b>'+
+    (best?'Ton record actuel est de '+best+' tours ('+(best*5)+' tractions, '+(best*10)+' pompes, '+(best*10)+' squats). Bats-le d\'un tour, proprement.':'Première séance : trouve un nombre de tours que tu finis en gardant une forme parfaite. La qualité avant le volume.')+
+    '<span class="why">Pourquoi : la montée graduelle (+1 tour) construit le volume sans flinguer tes épaules ni ta technique.</span></div>';
+  // barre vers l'objectif 40
+  const pct=Math.round(best/CIRCUIT_GOAL*100);
+  $('circuitProgress').innerHTML='<div class="eyebrow" style="margin-top:6px">Vers l\'objectif ultime · '+best+'/'+CIRCUIT_GOAL+' tours</div>'+
+    '<div style="height:12px;border-radius:99px;background:#E8ECF2;overflow:hidden;margin-top:6px"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#2447E0,#4FA3F7);border-radius:99px;transition:width .6s ease"></div></div>';
+  // historique
+  if(DB.circuit.length){
+    let h='<div class="divider"></div><div class="eyebrow">Historique</div><table class="hist"><tr><th>Date</th><th>Tours</th><th>Total reps</th><th>/10</th></tr>';
+    DB.circuit.slice(-6).reverse().forEach(c=>{ h+='<tr><td>'+c.date.slice(5)+'</td><td>'+c.tours+'</td><td>'+(c.tours*25)+'</td><td>'+(c.feel||'—')+'</td></tr>'; });
+    $('circuitHist').innerHTML=h+'</table>';
+  } else $('circuitHist').innerHTML='';
+}
+let circuitState=null;
+function startCircuit(){
+  circuitState={tours:0, phase:0, target:circuitTargetNext()};
+  showCircuitScreen();
+}
+const CIRC_STEPS=[['Tractions','5 répétitions'],['Pompes','10 répétitions'],['Squats','10 répétitions']];
+function showCircuitScreen(){
+  const w=$('chrono'); w.classList.add('on'); w.style.background='#1B2733'; document.body.style.overflow='hidden';
+  drawCircuit();
+}
+function drawCircuit(){
+  const s=circuitState, step=CIRC_STEPS[s.phase];
+  $('chPhase').textContent='Tour '+(s.tours+1)+' · cible '+s.target;
+  $('chTime').innerHTML=step[0];
+  $('chTime').style.fontSize='13vw';
+  $('chZone').textContent=step[1];
+  $('chNext').textContent='Tours complétés : '+s.tours+' / '+s.target+'  ·  '+(s.tours*25)+' reps cumulées';
+  // réutilise les boutons : transforme la barre de contrôle
+  const dots=$('chDots'); dots.innerHTML='';
+  CIRC_STEPS.forEach((st,i)=>{ const el=document.createElement('i'); if(i<=s.phase)el.classList.add('on'); dots.appendChild(el); });
+  const ctr=document.querySelector('#chrono .ctr');
+  ctr.innerHTML='<button onclick="circuitNext()">'+(s.phase<2?'Exercice fait':'Tour terminé')+'</button>'+
+                '<button onclick="circuitFinish()">Terminer la séance</button>';
+}
+function circuitNext(){
+  const s=circuitState;
+  if(s.phase<2){ s.phase++; }
+  else { s.tours++; s.phase=0; beep(2);
+    if(s.tours>=s.target){ circuitFinish(true); return; } }
+  drawCircuit();
+}
+function circuitFinish(reached){
+  const s=circuitState; chronoStop();
+  // restaurer la barre de contrôle d'origine du chrono
+  document.querySelector('#chrono .ctr').innerHTML='<button onclick="chronoToggle()" id="chPause">Pause</button><button onclick="chronoSkip()">Phase suiv.</button><button onclick="chronoStop()">Quitter</button>';
+  $('chTime').style.fontSize='';
+  if(s.tours>0){
+    DB.circuit.push({date:todayISO(), tours:s.tours, feel:null});
+    save();
+    toast(reached?('Cible atteinte : '+s.tours+' tours, machallah !'):(s.tours+' tours enregistrés'));
+    if(document.getElementById('v-cardio').classList.contains('on'))renderCircuit();
+    renderHome();
+  }
+  circuitState=null;
+}
+function saveCircuitManual(){
+  const t=+$('circManual').value;
+  if(!t||t<1){ toast('Indique un nombre de tours'); return; }
+  DB.circuit.push({date:todayISO(), tours:t, feel:$('circFeel')._val||null});
+  save(); $('circManual').value='';
+  toast(t+' tours enregistrés'); renderCircuit(); renderHome();
+}
+
+/* ═══════════ Bibliothèque cardio variée ═══════════ */
+const CARDIO_LIB=[
+ {id:'zone2', nom:'Zone 2 continu', reco:1, dur:'20-40 min', zone:'120-130 bpm',
+  desc:'Effort continu modéré : tu dois pouvoir parler en phrases complètes. Construit les mitochondries et les capillaires — la vraie fondation du VO2 max. Le point de départ idéal vu ton seuil actuel.',
+  build:()=>{ const steps=[{l:'Échauffement',d:300,k:'prep',z:'Montée douce vers 120 bpm'}];
+    steps.push({l:'Zone 2 continue',d:1500,k:'rest',z:'120-130 bpm · tu peux tenir une conversation',dot:1});
+    steps.push({l:'Retour au calme',d:180,k:'cool',z:'Pédalage léger'}); return steps; }},
+ {id:'4x4', nom:'4x4 norvégien', dur:'40 min', zone:'165-184 bpm',
+  desc:'10 min échauffement · 4 × (4 min effort / 3 min récup) · 5 min retour au calme. La référence VO2 max — à réserver quand 150 bpm te sera devenu confortable.',
+  build:()=>startFourByFourSteps()},
+ {id:'3030', nom:'Intervalles 30/30', dur:'~25 min', zone:'effort vif / récup',
+  desc:'Après échauffement : 12 × (30 s effort vif / 30 s récup active). Les intervalles courts laissent le souffle récupérer — plus accessibles qu\'un 4x4 quand le seuil est bas.',
+  build:()=>{ const s=[{l:'Échauffement',d:480,k:'prep',z:'Progressif'}];
+    for(let i=1;i<=12;i++){ s.push({l:'Effort '+i+'/12',d:30,k:'work',z:'Vif mais maîtrisé',dot:1}); s.push({l:'Récup',d:30,k:'rest',z:'Pédalage léger'}); }
+    s.push({l:'Retour au calme',d:240,k:'cool',z:''}); return s; }},
+ {id:'pyramide', nom:'Pyramide 1-2-3-2-1', dur:'~30 min', zone:'effort progressif',
+  desc:'Échauffement, puis efforts de 1, 2, 3, 2 puis 1 min, chacun suivi d\'une récup de durée égale. Travaille plusieurs intensités dans une même séance, sans la rigidité du 4x4.',
+  build:()=>{ const s=[{l:'Échauffement',d:480,k:'prep',z:'Progressif'}]; const mins=[1,2,3,2,1];
+    mins.forEach((m,i)=>{ s.push({l:'Effort '+m+' min',d:m*60,k:'work',z:'Soutenu, cadence régulière',dot:1}); s.push({l:'Récup '+m+' min',d:m*60,k:'rest',z:'Pédalage léger'}); });
+    s.push({l:'Retour au calme',d:180,k:'cool',z:''}); return s; }},
+ {id:'libre', nom:'Sortie libre', dur:'au choix', zone:'allure constante',
+  desc:'Vélo de ville, course à pied, marche rapide, natation. Allure constante et conversationnelle. Pas de minuteur — enregistre simplement ta sortie dans la carte « Sorties libres » ci-dessous.',
+  build:null}
+];
+let cardioSel='zone2';
+function renderCardioMenu(){
+  let h='<div class="chips" style="margin-top:10px">';
+  CARDIO_LIB.forEach(c=>{ h+='<button class="'+(c.id===cardioSel?'on':'')+'" onclick="cardioSel=\''+c.id+'\';renderCardioMenu()">'+c.nom+(c.reco?' ★':'')+'</button>'; });
+  h+='</div>';
+  $('cardioMenu').innerHTML=h;
+  const c=CARDIO_LIB.find(x=>x.id===cardioSel);
+  let d='<div class="advice'+(c.reco?' g':'')+'" style="margin-top:4px"><b>'+c.nom+' · '+c.dur+' · '+c.zone+'</b>'+c.desc+(c.reco?'<span class="why">Recommandé pour ton niveau actuel.</span>':'')+'</div>';
+  if(c.build) d+='<button class="btn eff" onclick="launchCardio(\''+c.id+'\')">Lancer la séance guidée</button>';
+  else d+='<button class="btn ghost" onclick="document.getElementById(\'fcType\').scrollIntoView({behavior:\'smooth\'})">Aller à l\'enregistrement de sortie</button>';
+  $('cardioDetail').innerHTML=d;
+}
+function launchCardio(id){ const c=CARDIO_LIB.find(x=>x.id===id); if(c&&c.build)chronoStart(c.build()); }
+function startFourByFourSteps(){
   const Z='Zone 165-184 bpm · cadence 85-95 rpm', R='~135 bpm · pédalage léger, ne t\'arrête pas';
   const steps=[{l:'Échauffement',d:600,k:'prep',z:'Progressif + 2-3 accélérations de 20 s sur la fin'}];
-  for(let i=1;i<=4;i++){
-    steps.push({l:'Effort '+i+'/4',d:240,k:'work',z:Z,dot:1});
-    if(i<4)steps.push({l:'Récup active',d:180,k:'rest',z:R});
-  }
+  for(let i=1;i<=4;i++){ steps.push({l:'Effort '+i+'/4',d:240,k:'work',z:Z,dot:1}); if(i<4)steps.push({l:'Récup active',d:180,k:'rest',z:R}); }
   steps.push({l:'Retour au calme',d:300,k:'cool',z:'Résistance minimale, souffle long'});
-  chronoStart(steps);
+  return steps;
 }
+
+function startFourByFour(){ chronoStart(startFourByFourSteps()); }
 function startEMOM(){
   const tasks=['10 kettlebell swings 20 kg','12 pompes','15 cal rameur (ou 200 m)'];
   const steps=[];
@@ -888,6 +1112,7 @@ function startTabata(){
 /* ═══════════ Cardio : enregistrement + graphique ═══════════ */
 function renderCardio(){
   range10($('cFeel'),0); range10($('fcFeel'),0);
+  renderCardioMenu(); renderCircuit();
   const sel=$('fcType');
   sel.onchange=()=>{ $('runWarn').innerHTML = sel.value==='Course à pied'
     ? '<div class="advice w"><b>Fasciite plantaire</b>Reprise très progressive : surface souple, foulée courte, et stop net à la moindre douleur au talon ou à la voûte.<span class="why">Pourquoi : la course charge le fascia à chaque impact — le vélo et la marche donnent le même cœur sans le risque.</span></div>' : ''; };
