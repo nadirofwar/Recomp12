@@ -103,6 +103,43 @@ h3{font-size:15px;font-weight:800;margin-bottom:8px}
   color:var(--ink);appearance:none;-webkit-appearance:none;
   background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232447E0' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right center;background-size:11px}
+/* — Journal plein écran — */
+.jrnl{position:fixed;inset:0;z-index:90;background:var(--bg);display:none;flex-direction:column}
+.jrnl.on{display:flex}
+.jhead{position:sticky;top:0;background:var(--ink);color:#fff;display:flex;align-items:center;
+  justify-content:space-between;padding:14px 16px;flex:none}
+.jhead .jtitle{font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:15px}
+.jback{color:#C9D4F8;font-weight:800;font-size:14px}
+.jbody{overflow:auto;padding:14px;flex:1;-webkit-overflow-scrolling:touch}
+.jfilters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.jfilters button{border:1.5px solid var(--line);border-radius:99px;padding:6px 12px;font-size:12px;
+  font-weight:800;background:#fff;color:var(--mut)}
+.jfilters button.on{background:var(--cobalt);border-color:var(--cobalt);color:#fff}
+.jentry{background:#fff;border:1px solid var(--line);border-radius:var(--rs);margin-bottom:9px;overflow:hidden}
+.jentry .row{display:flex;align-items:center;gap:11px;padding:12px;cursor:pointer}
+.jentry .tag{flex:none;width:8px;height:38px;border-radius:5px}
+.jentry .meta{flex:1;min-width:0}
+.jentry .meta .t{font-weight:800;font-size:14px}
+.jentry .meta .s{font-size:12px;color:var(--mut)}
+.jentry .dt{font-family:var(--mono);font-size:11px;color:var(--mut);text-align:right;flex:none}
+.jentry .det{display:none;padding:0 12px 12px;border-top:1px solid #EEF1F5}
+.jentry.open .det{display:block}
+.jentry .det table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.jentry .det td{padding:4px 4px;font-family:var(--mono);border-bottom:1px solid #F0F3F6}
+.jentry .editrow{display:grid;grid-template-columns:60px 1fr 1fr;gap:6px;align-items:center;margin-top:6px}
+.jentry .editrow input{border:1px solid var(--line);border-radius:6px;padding:6px;text-align:center;font-family:var(--mono);font-size:13px;width:100%}
+.jentry .jbtns{display:flex;gap:8px;margin-top:10px}
+.jentry .jbtns button{flex:1;border-radius:9px;padding:9px;font-weight:800;font-size:12.5px}
+.jbtn-edit{background:var(--cobalt-soft);color:var(--cobalt)}
+.jbtn-del{background:var(--effort-soft);color:var(--effort)}
+.jbtn-save{background:var(--cobalt);color:#fff}
+.jbtn-cancel{background:#EBEFF3;color:var(--mut)}
+.jstat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.jstat .c{background:#fff;border:1px solid var(--line);border-radius:var(--rs);padding:10px;text-align:center}
+.jstat .c .v{font-family:var(--mono);font-size:18px;font-weight:700}
+.jstat .c .l{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);margin-top:2px}
+.jio{display:flex;gap:8px;margin-bottom:14px}
+.jio button{flex:1;border:1.5px solid var(--line);border-radius:9px;padding:10px;font-weight:800;font-size:12.5px;background:#fff;color:var(--ink)}
 /* — Boutons — */
 .btn{display:block;width:100%;text-align:center;font-weight:800;font-size:14px;letter-spacing:.03em;
   padding:13px;border-radius:11px;background:var(--cobalt);color:#fff;margin-top:12px}
@@ -424,6 +461,7 @@ canvas.chartL{width:100%;height:190px;display:block;margin-top:6px;touch-action:
     <div class="eyebrow">Visualisation</div>
     <h2>Tes progrès</h2>
     <p class="sub">Tout ce que tu enregistres prend forme ici. Touche un point pour voir sa valeur.</p>
+    <button class="btn" onclick="openJournal()">Voir tout l'historique</button>
   </div>
   <div class="card">
     <h3>Force — top set par compound 🏋️</h3>
@@ -488,6 +526,15 @@ canvas.chartL{width:100%;height:190px;display:block;margin-top:6px;touch-action:
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="jrnl" id="journal">
+  <header class="jhead">
+    <button class="jback" onclick="closeJournal()">‹ Retour</button>
+    <span class="jtitle">Journal</span>
+    <button class="jback" onclick="openAddPast()">+ Passée</button>
+  </header>
+  <div class="jbody" id="journalBody"></div>
+</div>
 
 <nav class="tabs">
   <button data-v="home" class="on"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></span>Accueil</button>
@@ -1254,6 +1301,288 @@ function closeGloss(){ $('glossModal').classList.remove('on'); }
 document.addEventListener('click',e=>{
   const a=e.target.closest('abbr.g'); if(a) openGloss();
 });
+
+
+/* ═══════════ Journal détaillé : historique, édition, saisie rétroactive, export ═══════════ */
+const CAT = {
+  train:  {label:'Musculation', color:'#2447E0'},
+  cardio: {label:'Cardio',      color:'#D9472E'},
+  free:   {label:'Sortie libre',color:'#1E8A5A'},
+  circuit:{label:'Circuit 5-10-10', color:'#A8741A'},
+  checkin:{label:'Check-in',    color:'#5C6B78'}
+};
+let jFilter='all';
+
+function programKeyFor(iso){ // séance muscu théorique d'une date (J1-J4)
+  const p=PROGRAM[new Date(iso+'T12:00:00').getDay()];
+  return p&&p.exos?p:null;
+}
+function sessionByKey(key){ return Object.values(PROGRAM).find(p=>p.key===key); }
+
+function buildEntries(){
+  const out=[];
+  Object.entries(DB.train).forEach(([d,t])=>out.push({cat:'train', date:d, id:d, data:t}));
+  (DB.cardio||[]).forEach((c,i)=>out.push({cat:'cardio', date:c.date, id:i, data:c}));
+  (DB.freeCardio||[]).forEach((c,i)=>out.push({cat:'free', date:c.date, id:i, data:c}));
+  (DB.circuit||[]).forEach((c,i)=>out.push({cat:'circuit', date:c.date, id:i, data:c}));
+  (DB.checkins||[]).forEach((c,i)=>out.push({cat:'checkin', date:c.date, id:i, data:c}));
+  return out.sort((a,b)=> a.date<b.date?1:a.date>b.date?-1:0);
+}
+function tonnage(t){ return t.exos.reduce((a,e)=>a+e.sets.reduce((b,s)=>b+(+s.kg||0)*(+s.reps||0),0),0); }
+
+function openJournal(){ jFilter='all'; renderJournal(); $('journal').classList.add('on'); document.body.style.overflow='hidden'; }
+function closeJournal(){ $('journal').classList.remove('on'); document.body.style.overflow=''; renderProg(); renderHome(); }
+
+function renderJournal(){
+  const all=buildEntries();
+  // statistiques
+  const nT=Object.keys(DB.train).length, nC=(DB.cardio||[]).length, nF=(DB.freeCardio||[]).length,
+        nCi=(DB.circuit||[]).length, nK=(DB.checkins||[]).length;
+  const ton=Object.values(DB.train).reduce((a,t)=>a+tonnage(t),0);
+  const cmin=(DB.freeCardio||[]).reduce((a,c)=>a+(c.d||0),0);
+  const tours=(DB.circuit||[]).reduce((a,c)=>a+(c.tours||0),0);
+  let html='<div class="jstat">'+
+    '<div class="c"><div class="v">'+(nT+nC+nF+nCi)+'</div><div class="l">Séances</div></div>'+
+    '<div class="c"><div class="v">'+Math.round(ton).toLocaleString('fr-FR')+'</div><div class="l">Kg soulevés</div></div>'+
+    '<div class="c"><div class="v">'+tours+'</div><div class="l">Tours circuit</div></div></div>';
+  // export / import
+  html+='<div class="jio"><button onclick="exportData()">⤓ Exporter (sauvegarde)</button>'+
+        '<button onclick="document.getElementById(\'importFile\').click()">⤒ Importer</button></div>'+
+        '<input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(this)">';
+  // filtres
+  const filters=[['all','Tout'],['train','Muscu'],['cardio','Cardio'],['circuit','Circuit'],['checkin','Check-in']];
+  html+='<div class="jfilters">'+filters.map(f=>'<button class="'+(jFilter===f[0]?'on':'')+'" onclick="jFilter=\''+f[0]+'\';renderJournal()">'+f[1]+'</button>').join('')+'</div>';
+  // liste
+  const shown=all.filter(e=> jFilter==='all' || (jFilter==='cardio'? (e.cat==='cardio'||e.cat==='free') : e.cat===jFilter));
+  if(!shown.length){ html+='<div class="empty-chart">Aucune entrée dans cette catégorie pour l\'instant. Enregistre une séance, ou ajoute-en une passée avec « + Passée ».</div>'; }
+  else shown.forEach(e=>{ html+=entryHTML(e); });
+  $('journalBody').innerHTML=html;
+}
+
+function summary(e){
+  const t=e.data;
+  if(e.cat==='train') return t.title+' · '+t.exos.length+' exercices';
+  if(e.cat==='cardio'){ const f=t.avg?('FC moy '+t.avg):'séance'; return (t.fmt||'4x4')+' · '+f; }
+  if(e.cat==='free') return t.t+' · '+(t.d||'?')+' min'+(t.km?' · '+t.km+' km':'');
+  if(e.cat==='circuit') return t.tours+' tours · '+(t.tours*25)+' reps';
+  if(e.cat==='checkin') return (t.w?t.w.toFixed(1)+' kg':'—')+(t.t?' · '+t.t+' cm':'');
+  return '';
+}
+function entryHTML(e){
+  const c=CAT[e.cat], eid=e.cat+'|'+e.id;
+  return '<div class="jentry" id="je-'+btoa(unescape(encodeURIComponent(eid))).replace(/=/g,'')+'">'+
+    '<div class="row" onclick="toggleEntry(this.parentNode)">'+
+      '<div class="tag" style="background:'+c.color+'"></div>'+
+      '<div class="meta"><div class="t">'+c.label+'</div><div class="s">'+summary(e)+'</div></div>'+
+      '<div class="dt">'+fmtShort(e.date)+'</div>'+
+    '</div>'+
+    '<div class="det" data-cat="'+e.cat+'" data-id="'+e.id+'">'+detailHTML(e)+'</div>'+
+  '</div>';
+}
+function toggleEntry(el){ el.classList.toggle('open'); }
+
+function detailHTML(e){
+  const t=e.data; let h='';
+  if(e.cat==='train'){
+    h+='<table>'; t.exos.forEach(ex=>{ h+='<tr><td colspan="2" style="font-family:inherit;font-weight:800;padding-top:8px">'+ex.n+'</td></tr>';
+      ex.sets.forEach((s,i)=>{ h+='<tr><td>S'+(i+1)+'</td><td>'+(s.kg||'—')+' kg × '+(s.reps||'—')+'</td></tr>'; }); });
+    h+='</table><div class="sub" style="margin-top:8px">Semaine '+(t.week||'?')+' · Ressenti '+(t.feel?t.feel+'/10':'—')+' · Tonnage '+Math.round(tonnage(t)).toLocaleString('fr-FR')+' kg</div>';
+  } else if(e.cat==='cardio'){
+    const inZ=t.avg>=165&&t.avg<=184;
+    h+='<table><tr><td>Format</td><td>'+(t.fmt||'4x4 norvégien')+'</td></tr><tr><td>Résistance</td><td>'+(t.r||'—')+'</td></tr>'+
+       '<tr><td>FC max</td><td>'+(t.max||'—')+' bpm</td></tr><tr><td>FC moyenne</td><td>'+(t.avg||'—')+' bpm '+(t.avg?(inZ?'(zone)':'(sous zone)'):'')+'</td></tr>'+
+       '<tr><td>Sensation</td><td>'+(t.feel||'—')+'/10</td></tr></table>';
+  } else if(e.cat==='free'){
+    h+='<table><tr><td>Activité</td><td>'+t.t+'</td></tr><tr><td>Durée</td><td>'+(t.d||'—')+' min</td></tr>'+
+       '<tr><td>Distance</td><td>'+(t.km||'—')+' km</td></tr><tr><td>Sensation</td><td>'+(t.feel||'—')+'/10</td></tr></table>';
+  } else if(e.cat==='circuit'){
+    h+='<table><tr><td>Tours</td><td>'+t.tours+'</td></tr><tr><td>Tractions</td><td>'+(t.tours*5)+'</td></tr>'+
+       '<tr><td>Pompes</td><td>'+(t.tours*10)+'</td></tr><tr><td>Squats</td><td>'+(t.tours*10)+'</td></tr>'+
+       '<tr><td>Sensation</td><td>'+(t.feel||'—')+'/10</td></tr></table>';
+  } else if(e.cat==='checkin'){
+    h+='<table><tr><td>Poids</td><td>'+(t.w?t.w.toFixed(1):'—')+' kg</td></tr><tr><td>Tour de taille</td><td>'+(t.t||'—')+' cm</td></tr>'+
+       '<tr><td>Énergie</td><td>'+(t.e||'—')+'/10</td></tr><tr><td>Sommeil</td><td>'+(t.s||'—')+'/10</td></tr><tr><td>Humeur</td><td>'+(t.h||'—')+'/10</td></tr></table>';
+  }
+  h+='<div class="jbtns"><button class="jbtn-edit" onclick="editEntry(this,\''+e.cat+'\',\''+e.id+'\')">Modifier</button>'+
+     '<button class="jbtn-del" onclick="deleteEntry(\''+e.cat+'\',\''+e.id+'\')">Supprimer</button></div>';
+  return h;
+}
+
+/* ─── Édition ─── */
+function entryRef(cat,id){
+  if(cat==='train') return DB.train[id];
+  if(cat==='cardio') return DB.cardio[+id];
+  if(cat==='free') return DB.freeCardio[+id];
+  if(cat==='circuit') return DB.circuit[+id];
+  if(cat==='checkin') return DB.checkins[+id];
+}
+function editEntry(btn, cat, id){
+  const det=btn.closest('.det'), t=entryRef(cat,id); let h='';
+  if(cat==='train'){
+    t.exos.forEach((ex,ei)=>{ h+='<div style="font-weight:800;font-size:13px;margin-top:8px">'+ex.n+'</div>';
+      ex.sets.forEach((s,si)=>{ h+='<div class="editrow"><span class="sl num">S'+(si+1)+'</span>'+
+        '<input data-e="'+ei+'" data-s="'+si+'" data-f="kg" value="'+(s.kg||'')+'" placeholder="kg" inputmode="decimal">'+
+        '<input data-e="'+ei+'" data-s="'+si+'" data-f="reps" value="'+(s.reps||'')+'" placeholder="reps" inputmode="numeric"></div>'; }); });
+    h+='<div class="editrow" style="margin-top:8px"><span class="sl">Feel</span><input data-meta="feel" value="'+(t.feel||'')+'" placeholder="/10" inputmode="numeric"><span></span></div>';
+  } else if(cat==='cardio'){
+    h+=editField('r',t.r,'Résistance')+editField('max',t.max,'FC max')+editField('avg',t.avg,'FC moy')+editField('feel',t.feel,'Feel /10');
+  } else if(cat==='free'){
+    h+=editField('d',t.d,'Durée min')+editField('km',t.km,'Km')+editField('feel',t.feel,'Feel /10');
+  } else if(cat==='circuit'){
+    h+=editField('tours',t.tours,'Tours')+editField('feel',t.feel,'Feel /10');
+  } else if(cat==='checkin'){
+    h+=editField('w',t.w,'Poids')+editField('t',t.t,'Taille cm')+editField('e',t.e,'Énergie')+editField('s',t.s,'Sommeil')+editField('h',t.h,'Humeur');
+  }
+  h+='<div class="jbtns"><button class="jbtn-save" onclick="saveEntry(this,\''+cat+'\',\''+id+'\')">Enregistrer</button>'+
+     '<button class="jbtn-cancel" onclick="renderJournal()">Annuler</button></div>';
+  det.innerHTML=h;
+}
+function editField(f,val,label){
+  return '<div class="editrow"><span class="sl" style="font-size:11px">'+label+'</span>'+
+         '<input data-meta="'+f+'" value="'+(val!=null?val:'')+'" inputmode="decimal"><span></span></div>';
+}
+function saveEntry(btn, cat, id){
+  const det=btn.closest('.det'), t=entryRef(cat,id);
+  if(cat==='train'){
+    det.querySelectorAll('input[data-f]').forEach(inp=>{
+      const ei=+inp.dataset.e, si=+inp.dataset.s, f=inp.dataset.f;
+      t.exos[ei].sets[si][f]=inp.value;
+    });
+    const fe=det.querySelector('input[data-meta=feel]'); if(fe)t.feel=+fe.value||null;
+  } else {
+    det.querySelectorAll('input[data-meta]').forEach(inp=>{
+      const f=inp.dataset.meta, v=inp.value===''?null:+inp.value;
+      t[f]=v;
+    });
+  }
+  save(); toast('Entrée modifiée'); renderJournal();
+}
+function deleteEntry(cat,id){
+  openSheet('<h3>Supprimer cette entrée ?</h3><p class="sub">Cette action est définitive. Pense à exporter une sauvegarde si tu hésites.</p>'+
+    '<div class="jbtns" style="margin-top:14px"><button class="jbtn-del" onclick="confirmDelete(\''+cat+'\',\''+id+'\')">Oui, supprimer</button>'+
+    '<button class="jbtn-cancel" onclick="closeSheet()">Annuler</button></div>');
+}
+function confirmDelete(cat,id){
+  if(cat==='train') delete DB.train[id];
+  else if(cat==='cardio') DB.cardio.splice(+id,1);
+  else if(cat==='free') DB.freeCardio.splice(+id,1);
+  else if(cat==='circuit') DB.circuit.splice(+id,1);
+  else if(cat==='checkin') DB.checkins.splice(+id,1);
+  save(); closeSheet(); toast('Entrée supprimée'); renderJournal();
+}
+
+/* ─── Saisie rétroactive ─── */
+function openAddPast(){
+  const max=todayISO(), min='2026-06-12';
+  const h='<h3>Ajouter une séance passée <button class="btn ghost sm" onclick="closeSheet()">Fermer</button></h3>'+
+    '<div class="frow"><label>Date</label><input type="date" id="apDate" min="'+min+'" max="'+max+'" value="'+max+'"></div>'+
+    '<div class="frow"><label>Type</label><select id="apType" onchange="apTypeChange()">'+
+      '<option value="train">Musculation</option><option value="cardio">Cardio (4x4 / Zone 2…)</option>'+
+      '<option value="circuit">Circuit 5-10-10</option><option value="free">Sortie libre</option><option value="checkin">Check-in</option></select></div>'+
+    '<div id="apForm"></div>'+
+    '<button class="btn" onclick="saveAddPast()">Enregistrer cette séance</button>';
+  openSheet(h); apTypeChange();
+}
+function apTypeChange(){
+  const type=$('apType').value; let h='';
+  if(type==='train'){
+    h+='<div class="frow"><label>Séance</label><select id="apKey">'+
+       '<option value="UF">Upper — Force (J1)</option><option value="LF">Lower — Force (J2)</option>'+
+       '<option value="UH">Upper — Hypertrophie (J3)</option><option value="LH">Lower — Hypertrophie (J4)</option></select></div>'+
+       '<div id="apExos"></div>';
+    setTimeout(()=>{ $('apKey').onchange=apRenderExos; apRenderExos(); },0);
+  } else if(type==='cardio'){
+    h+='<div class="frow"><label>Format</label><select id="apFmt"><option>4x4 norvégien</option><option>Zone 2 continu</option><option>Intervalles 30/30</option><option>Pyramide</option></select></div>'+
+       '<div class="frow"><label>Résistance</label><input id="apR" inputmode="numeric"></div>'+
+       '<div class="frow"><label>FC max</label><input id="apMax" inputmode="numeric"></div>'+
+       '<div class="frow"><label>FC moyenne</label><input id="apAvg" inputmode="numeric"></div>'+
+       '<div class="frow"><label>Sensation /10</label><input id="apFeel" inputmode="numeric"></div>';
+  } else if(type==='circuit'){
+    h+='<div class="frow"><label>Tours réalisés</label><input id="apTours" inputmode="numeric"></div>'+
+       '<div class="frow"><label>Sensation /10</label><input id="apFeel" inputmode="numeric"></div>';
+  } else if(type==='free'){
+    h+='<div class="frow"><label>Activité</label><select id="apAct"><option>Vélo de ville</option><option>Course à pied</option><option>Marche rapide</option><option>Natation</option><option>Autre</option></select></div>'+
+       '<div class="frow"><label>Durée (min)</label><input id="apDur" inputmode="numeric"></div>'+
+       '<div class="frow"><label>Distance (km)</label><input id="apKm" inputmode="decimal"></div>'+
+       '<div class="frow"><label>Sensation /10</label><input id="apFeel" inputmode="numeric"></div>';
+  } else if(type==='checkin'){
+    h+='<div class="frow"><label>Poids (kg)</label><input id="apW" inputmode="decimal"></div>'+
+       '<div class="frow"><label>Tour de taille (cm)</label><input id="apT" inputmode="decimal"></div>'+
+       '<div class="frow"><label>Énergie /10</label><input id="apE" inputmode="numeric"></div>'+
+       '<div class="frow"><label>Sommeil /10</label><input id="apS" inputmode="numeric"></div>'+
+       '<div class="frow"><label>Humeur /10</label><input id="apH" inputmode="numeric"></div>';
+  }
+  $('apForm').innerHTML=h;
+}
+function apRenderExos(){
+  const cs=sessionByKey($('apKey').value); let h='';
+  cs.exos.forEach((e,ix)=>{ h+='<div style="font-weight:800;font-size:13px;margin-top:8px">'+e.n+'</div>';
+    for(let s=0;s<4;s++){ h+='<div class="editrow"><span class="sl num">S'+(s+1)+'</span>'+
+      '<input data-ix="'+ix+'" data-s="'+s+'" data-f="kg" placeholder="kg" inputmode="decimal">'+
+      '<input data-ix="'+ix+'" data-s="'+s+'" data-f="reps" placeholder="'+(e.amrap?'max':e.hi)+'" inputmode="numeric"></div>'; } });
+  $('apExos').innerHTML=h;
+}
+function saveAddPast(){
+  const date=$('apDate').value, type=$('apType').value;
+  if(!date){ toast('Choisis une date'); return; }
+  const w=weekNum(new Date(date+'T12:00:00'));
+  if(type==='train'){
+    if(DB.train[date]){ openSheet('<h3>Séance déjà existante</h3><p class="sub">Une séance de musculation est déjà enregistrée le '+fmtShort(date)+'. La remplacer ?</p><div class="jbtns" style="margin-top:14px"><button class="jbtn-del" onclick="doSaveTrainPast()">Remplacer</button><button class="jbtn-cancel" onclick="closeSheet()">Annuler</button></div>'); return; }
+    doSaveTrainPast();
+  } else if(type==='cardio'){
+    DB.cardio.push({date, fmt:$('apFmt').value, r:+$('apR').value||null, max:+$('apMax').value||null, avg:+$('apAvg').value||null, feel:+$('apFeel').value||null});
+    finishAddPast();
+  } else if(type==='circuit'){
+    const tr=+$('apTours').value; if(!tr){ toast('Indique les tours'); return; }
+    DB.circuit.push({date, tours:tr, feel:+$('apFeel').value||null}); finishAddPast();
+  } else if(type==='free'){
+    const d=+$('apDur').value; if(!d){ toast('Indique la durée'); return; }
+    DB.freeCardio.push({date, t:$('apAct').value, d, km:+$('apKm').value||null, feel:+$('apFeel').value||null}); finishAddPast();
+  } else if(type==='checkin'){
+    const wv=+$('apW').value; if(!wv){ toast('Indique le poids'); return; }
+    DB.checkins.push({date, w:wv, t:+$('apT').value||null, e:+$('apE').value||null, s:+$('apS').value||null, h:+$('apH').value||null});
+    DB.checkins.sort((a,b)=>a.date<b.date?-1:1); finishAddPast();
+  }
+}
+function doSaveTrainPast(){
+  const date=$('apDate').value, cs=sessionByKey($('apKey').value), w=weekNum(new Date(date+'T12:00:00'));
+  const exos=cs.exos.map((e,ix)=>{ const sets=[];
+    for(let s=0;s<4;s++){ const kg=$('apExos').querySelector('[data-ix="'+ix+'"][data-s="'+s+'"][data-f=kg]').value;
+      const reps=$('apExos').querySelector('[data-ix="'+ix+'"][data-s="'+s+'"][data-f=reps]').value;
+      sets.push({kg,reps}); }
+    return {n:e.n, sets}; });
+  DB.train[date]={key:cs.key, title:cs.title, exos, feel:null, week:w};
+  finishAddPast();
+}
+function finishAddPast(){ save(); closeSheet(); toast('Séance passée enregistrée'); renderJournal(); }
+
+/* ─── Export / Import ─── */
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download='recomp12-sauvegarde-'+todayISO()+'.json';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast('Sauvegarde exportée');
+}
+function importData(input){
+  const file=input.files[0]; if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const obj=JSON.parse(r.result);
+      if(typeof obj!=='object'||!('train' in obj)) throw new Error('structure');
+      openSheet('<h3>Importer cette sauvegarde ?</h3><p class="sub">Cela remplacera toutes tes données actuelles par celles du fichier. Exporte d\'abord une sauvegarde si besoin.</p><div class="jbtns" style="margin-top:14px"><button class="jbtn-save" onclick="doImport()">Remplacer mes données</button><button class="jbtn-cancel" onclick="closeSheet()">Annuler</button></div>');
+      window._pendingImport=obj;
+    }catch(e){ toast('Fichier invalide'); }
+  };
+  r.readAsText(file); input.value='';
+}
+function doImport(){
+  const obj=window._pendingImport; if(!obj)return;
+  DB=Object.assign({train:{},cardio:[],freeCardio:[],checkins:[],food:{},variants:{},reschedules:[],circuit:[]}, obj);
+  DB.freeCardio=DB.freeCardio||[]; DB.reschedules=DB.reschedules||[]; DB.circuit=DB.circuit||[]; DB.variants=DB.variants||{};
+  save(); window._pendingImport=null; closeSheet(); toast('Données restaurées'); renderJournal();
+}
 
 /* ═══════════ Initialisation ═══════════ */
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
